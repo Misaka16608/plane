@@ -27,8 +27,11 @@ def validate_schema(value):
 def validate_domain(value):
     parsed_url = urlparse(value)
     domain = parsed_url.netloc
-    if domain in ["localhost", "127.0.0.1"]:
-        raise ValidationError("Local URLs are not allowed.")
+    # Loopback/local URLs are intentionally allowed here: SSRF protection is
+    # enforced by WebhookSerializer._validate_webhook_url (WEBHOOK_ALLOWED_IPS /
+    # WEBHOOK_ALLOWED_HOSTS), which permits loopback only when explicitly
+    # configured by the operator (e.g. a local Codex runner).
+    _ = domain
 
 
 class Webhook(BaseModel):
