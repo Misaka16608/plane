@@ -15,6 +15,7 @@ import { SearchIcon, StateGroupIcon, ChevronDownIcon } from "@plane/propel/icons
 import type { IState } from "@plane/types";
 import { ComboDropDown, Spinner } from "@plane/ui";
 import { cn } from "@plane/utils";
+import { getLocalizedStateName } from "@/components/issues/issue-layouts/utils";
 // components
 import { DropdownButton } from "@/components/dropdowns/buttons";
 import { BUTTON_VARIANTS_WITH_TEXT } from "@/components/dropdowns/constants";
@@ -121,7 +122,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
           className={cn("flex-shrink-0", iconSize)}
           percentage={state?.order}
         />
-        <span className="flex-grow truncate text-left">{state?.name}</span>
+        <span className="flex-grow truncate text-left">{getLocalizedStateName(state?.name, t)}</span>
       </div>
     ),
   }));
@@ -169,7 +170,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
             className={buttonClassName}
             isActive={isOpen}
             tooltipHeading={t("state")}
-            tooltipContent={selectedState?.name ?? t("state")}
+            tooltipContent={getLocalizedStateName(selectedState?.name, t) || t("state")}
             showTooltip={showTooltip}
             variant={buttonVariant}
             renderToolTipByDefault={renderByDefault}
@@ -187,7 +188,9 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
                   />
                 )}
                 {BUTTON_VARIANTS_WITH_TEXT.includes(buttonVariant) && (
-                  <span className="flex-grow truncate text-left">{selectedState?.name ?? t("state")}</span>
+                  <span className="flex-grow truncate text-left">
+                    {getLocalizedStateName(selectedState?.name, t) || t("state")}
+                  </span>
                 )}
                 {dropdownArrow && (
                   <ChevronDownIcon
@@ -233,7 +236,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t("common.search.label")}
-                displayValue={(assigned: any) => assigned?.name}
+                displayValue={(assigned: any) => getLocalizedStateName(assigned?.name, t)}
                 onKeyDown={searchInputKeyDown}
               />
             </div>

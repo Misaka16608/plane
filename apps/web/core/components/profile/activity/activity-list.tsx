@@ -31,7 +31,7 @@ export const ActivityList = observer(function ActivityList(props: Props) {
   // store hooks
   const { data: currentUser } = useUser();
   const { getWorkspaceBySlug } = useWorkspace();
-  const { currentLocale } = useTranslation();
+  const { currentLocale, t } = useTranslation();
   // derived values
   const workspaceId = getWorkspaceBySlug(workspaceSlug?.toString() ?? "")?.id ?? "";
 
@@ -74,7 +74,7 @@ export const ActivityList = observer(function ActivityList(props: Props) {
                             : activityItem.actor_detail.display_name}
                         </div>
                         <p className="mt-0.5 text-11 text-secondary">
-                          Commented{" "}
+                          {t("issue_activity.commented")}{" "}
                           {calculateTimeAgo(activityItem.created_at, getDateFnsLocaleForLanguage(currentLocale))}
                         </p>
                       </div>

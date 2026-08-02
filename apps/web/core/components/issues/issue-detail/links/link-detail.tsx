@@ -31,7 +31,7 @@ export function IssueLinkDetail(props: TIssueLinkDetail) {
     link: { getLinkById },
     setIssueLinkData,
   } = useIssueDetail();
-  const { currentLocale } = useTranslation();
+  const { currentLocale, t } = useTranslation();
   const { getUserDetails } = useMember();
   const { isMobile } = usePlatformOS();
   const linkDetail = getLinkById(linkId);
@@ -112,7 +112,8 @@ export function IssueLinkDetail(props: TIssueLinkDetail) {
 
         <div className="px-5">
           <p className="mt-0.5 stroke-[1.5] text-11 text-tertiary">
-            Added {calculateTimeAgo(linkDetail.created_at, getDateFnsLocaleForLanguage(currentLocale))}
+            {t("issue_activity.added")}{" "}
+            {calculateTimeAgo(linkDetail.created_at, getDateFnsLocaleForLanguage(currentLocale))}
             <br />
             {createdByDetails && (
               <>

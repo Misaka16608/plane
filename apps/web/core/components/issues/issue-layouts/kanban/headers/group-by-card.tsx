@@ -10,6 +10,7 @@ import { useParams } from "next/navigation";
 // lucide icons
 import { Minimize2, Maximize2, Circle } from "lucide-react";
 import { PlusIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TIssue, ISearchIssueResponse, TIssueKanbanFilters, TIssueGroupByOptions } from "@plane/types";
 // ui
@@ -20,6 +21,7 @@ import { CreateUpdateIssueModal } from "@/components/issues/issue-modal/modal";
 // constants
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { CreateUpdateEpicModal } from "@/components/epic-modal";
+import { getLocalizedStateName } from "@/components/issues/issue-layouts/utils";
 
 interface IHeaderGroupByCard {
   sub_group_by: TIssueGroupByOptions | undefined;
@@ -37,6 +39,7 @@ interface IHeaderGroupByCard {
 }
 
 export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHeaderGroupByCard) {
+  const { t } = useTranslation();
   const {
     sub_group_by,
     column_id,
@@ -72,14 +75,14 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
 
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Success!",
-        message: "Work items added to the cycle successfully.",
+        title: t("common.success"),
+        message: t("work_item.added_to_cycle_success"),
       });
     } catch (_error) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error!",
-        message: "Selected work items could not be added to the cycle. Please try again.",
+        title: t("common.error.label"),
+        message: t("work_item.added_to_cycle_error"),
       });
     }
   };
@@ -126,7 +129,7 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
               verticalAlignPosition ? `max-h-[400px] vertical-lr` : ``
             }`}
           >
-            {title}
+            {getLocalizedStateName(title, t)}
           </div>
           <div
             className={`flex-shrink-0 text-13 font-medium text-tertiary ${verticalAlignPosition ? `pr-0.5` : `pl-2`}`}
@@ -163,14 +166,14 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
                   setIsOpen(true);
                 }}
               >
-                <span className="flex items-center justify-start gap-2">Create work item</span>
+                <span className="flex items-center justify-start gap-2">{t("work_item.create")}</span>
               </CustomMenu.MenuItem>
               <CustomMenu.MenuItem
                 onClick={() => {
                   setOpenExistingIssueListModal(true);
                 }}
               >
-                <span className="flex items-center justify-start gap-2">Add an existing work item</span>
+                <span className="flex items-center justify-start gap-2">{t("work_item.add_existing")}</span>
               </CustomMenu.MenuItem>
             </CustomMenu>
           ) : (

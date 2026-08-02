@@ -9,7 +9,9 @@ import { observer } from "mobx-react";
 import { Circle } from "lucide-react";
 import { ChevronDownIcon, ChevronUpIcon } from "@plane/propel/icons";
 // Plane
+import { useTranslation } from "@plane/i18n";
 import type { TIssueGroupByOptions, TIssueKanbanFilters } from "@plane/types";
+import { getLocalizedStateName } from "@/components/issues/issue-layouts/utils";
 
 interface IHeaderSubGroupByCard {
   icon?: React.ReactNode;
@@ -22,6 +24,7 @@ interface IHeaderSubGroupByCard {
 }
 
 export const HeaderSubGroupByCard = observer(function HeaderSubGroupByCard(props: IHeaderSubGroupByCard) {
+  const { t } = useTranslation();
   const { icon, title, count, column_id, collapsedGroups, handleCollapsedGroups } = props;
   return (
     // oxlint-disable-next-line jsx_a11y/click-events-have-key-events oxlint-disable-next-line jsx_a11y/no-static-element-interactions
@@ -42,7 +45,7 @@ export const HeaderSubGroupByCard = observer(function HeaderSubGroupByCard(props
       </div>
 
       <div className="flex flex-shrink-0 items-center gap-1 text-13">
-        <div className="line-clamp-1 text-primary">{title}</div>
+        <div className="line-clamp-1 text-primary">{getLocalizedStateName(title, t)}</div>
         <div className="pl-2 text-13 font-medium text-tertiary">{count || 0}</div>
       </div>
     </div>

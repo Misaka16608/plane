@@ -429,6 +429,19 @@
     "link_word": "link",
     "period": ".",
     "work_items_fallback": "Work items",
+    "edited": "(edited)",
+    "commented": "Commented",
+    "added": "Added",
+    "by": "by",
+    "bot": "Bot",
+    "state": {
+      "backlog": "Backlog",
+      "todo": "Todo",
+      "in_progress": "In Progress",
+      "done": "Done",
+      "cancelled": "Cancelled",
+      "triage": "Triage"
+    },
     "issue": {
       "created": "created {{issue}}",
       "deleted": "deleted {{issue}}",
@@ -564,5 +577,17 @@
       "duplicate_suffix": " from intake by marking a duplicate work item.",
       "updated": "updated intake work item status."
     }
+  },
+  "token": {
+    "expires": "Expires",
+    "at": "at",
+    "never_expires": "Never expires",
+    "expired": "Expired"
+  },
+  "work_item": {
+    "create": "Create work item",
+    "add_existing": "Add an existing work item",
+    "added_to_cycle_success": "Work items added to the cycle successfully.",
+    "added_to_cycle_error": "Selected work items could not be added to the cycle. Please try again."
   }
 }

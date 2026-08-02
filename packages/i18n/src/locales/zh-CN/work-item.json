@@ -429,6 +429,19 @@
     "link_word": "链接",
     "period": "。",
     "work_items_fallback": "工作项",
+    "edited": "（已编辑）",
+    "commented": "评论于",
+    "added": "添加于",
+    "by": "由",
+    "bot": "机器人",
+    "state": {
+      "backlog": "积压",
+      "todo": "待处理",
+      "in_progress": "进行中",
+      "done": "已完成",
+      "cancelled": "已取消",
+      "triage": "待分诊"
+    },
     "issue": {
       "created": "创建了 {{issue}}",
       "deleted": "删除了 {{issue}}",
@@ -564,5 +577,17 @@
       "duplicate_suffix": "（因标记为重复工作项）",
       "updated": "更新了收件箱工作项状态。"
     }
+  },
+  "token": {
+    "expires": "过期时间",
+    "at": "",
+    "never_expires": "永不过期",
+    "expired": "已过期"
+  },
+  "work_item": {
+    "create": "创建工作项",
+    "add_existing": "添加已有工作项",
+    "added_to_cycle_success": "工作项已成功添加到周期。",
+    "added_to_cycle_error": "无法将所选工作项添加到周期，请重试。"
   }
 }

@@ -73,6 +73,23 @@ import {
   SpreadsheetUpdatedOnColumn,
 } from "@/components/issues/issue-layouts/spreadsheet/columns";
 
+// Default state names (seeded in the DB) mapped to i18n keys so kanban/list
+// group headers and state dropdowns render localized names.
+const DEFAULT_STATE_NAME_KEYS: Record<string, string> = {
+  Backlog: "issue_activity.state.backlog",
+  Todo: "issue_activity.state.todo",
+  "In Progress": "issue_activity.state.in_progress",
+  Done: "issue_activity.state.done",
+  Cancelled: "issue_activity.state.cancelled",
+  Triage: "issue_activity.state.triage",
+};
+
+export const getLocalizedStateName = (name: string | null | undefined, t: (key: string) => string): string => {
+  if (!name) return "";
+  const key = DEFAULT_STATE_NAME_KEYS[name];
+  return key ? t(key) : name;
+};
+
 export const HIGHLIGHT_CLASS = "highlight";
 export const HIGHLIGHT_WITH_LINE = "highlight-with-line";
 

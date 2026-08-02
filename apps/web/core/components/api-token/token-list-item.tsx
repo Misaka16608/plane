@@ -27,7 +27,7 @@ export function ApiTokenListItem(props: Props) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   // hooks
   const { isMobile } = usePlatformOS();
-  const { currentLocale } = useTranslation();
+  const { currentLocale, t } = useTranslation();
 
   return (
     <>
@@ -59,8 +59,10 @@ export function ApiTokenListItem(props: Props) {
           <p className="mb-1 text-11 leading-6 text-placeholder">
             {token.is_active
               ? token.expired_at
-                ? `Expires ${renderFormattedDate(token.expired_at)} at ${renderFormattedTime(token.expired_at)}`
-                : "Never expires"
+                ? `${t("token.expires")} ${renderFormattedDate(token.expired_at)} ${t("token.at")} ${renderFormattedTime(
+                    token.expired_at
+                  )}`
+                : t("token.never_expires")
               : `Expired ${calculateTimeAgo(token.expired_at, getDateFnsLocaleForLanguage(currentLocale))}`}
           </p>
         </div>

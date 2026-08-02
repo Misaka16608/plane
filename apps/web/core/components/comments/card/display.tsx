@@ -49,7 +49,7 @@ export type TCommentCardDisplayProps = {
 };
 
 export const CommentCardDisplay = observer(function CommentCardDisplay(props: TCommentCardDisplayProps) {
-  const { currentLocale } = useTranslation();
+  const { currentLocale, t } = useTranslation();
   const {
     activityOperations,
     comment,
@@ -137,7 +137,7 @@ export const CommentCardDisplay = observer(function CommentCardDisplay(props: TC
             >
               <span className="text-tertiary">
                 {calculateTimeAgo(comment.created_at, getDateFnsLocaleForLanguage(currentLocale))}
-                {comment.edited_at && " (edited)"}
+                {comment.edited_at && ` ${t("issue_activity.edited")}`}
               </span>
             </Tooltip>
           </div>
