@@ -1,0 +1,170 @@
+# Plane 项目接手文档（会话交接）
+
+> 目的：让下一个会话（或开发者）快速了解当前状态、环境要点、代码结构和下一步定制方向。
+> 详细部署流程见 [DEPLOYMENT.md](./DEPLOYMENT.md)。
+
+---
+
+## 0. 三句话摘要
+
+1. 本机已用 Docker Compose 跑起 **Plane CE 1.4.0**（`preview` 分支的 fork），入口 `http://localhost`，管理员已创建，可正常使用。
+2. 构建和运行中的网络/环境问题（被墙域名、BuildKit 不走代理、i18n 加载）都已修复并**提交推送**到 fork（`3d7dcff`）。
+3. 用户下一步想做自定义（如"接入 Codex 角色"），本文件给出代码落点和建议路线。
+
+---
+
+## 1. 当前系统状态
+
+| 项目 | 状态 |
+|---|---|
+| 仓库 | `D:\_Code\Server\plane`，fork 自 `Misaka16608/plane`（= makeplane/plane `preview`） |
+| 版本 | Plane Community Edition 1.4.0 |
+| 远程 | `origin` = `ssh://git@ssh.github.com:443/Misaka16608/plane.git`，已推送至 `preview`（`3d7dcff`） |
+| 运行方式 | Docker Compose，13 个容器全部 Up/healthy |
+| 访问 | http://localhost（主应用）/ /god-mode/（管理后台）/ /spaces/（分享页） |
+| 管理员 | 已创建（邮箱为用户的 163 邮箱，密码用户自持，**注意密码强度要求 zxcvbn≥3**） |
+| 语言 | 默认英文，登录后顶部搜索框（Power-K）→ Preferences → Update language 可切中文 |
+
+### 关键文件位置
+
+| 文件 | 说明 |
+|---|---|
+| `docker-compose.yml` | 服务编排（含本会话的修复：proxy/live env、web 语言卷挂载） |
+| `.env` / `apps/api/.env` | 运行配置（已被 gitignore，含 SECRET_KEY 等） |
+| `packages/i18n/src/locales/` | 全部翻译文件（**卷挂载，改完刷新即生效**） |
+| `DEPLOYMENT.md` | 启动/停止/重建/踩坑全流程 |
+
+---
+
+## 2. 环境关键事实（下个会话必读）
+
+- **本地代理**：`127.0.0.1:7890`（mihomo）必须运行；`github.com`、`auth.docker.io`、`sum.golang.org` 直连不通。
+- **Docker 代理配置（两处，勿随意改）**：
+  - Docker Desktop 设置 `%APPDATA%\Docker\settings-store.json`：`ProxyHTTPMode=manual` + `OverrideProxyHTTP/HTTPS=http://127.0.0.1:7890`
+  - `%USERPROFILE%\.docker\daemon.json`：`proxies` 指向同一代理
+- **构建前必须预拉基础镜像**（BuildKit 拉基础镜像不走代理）：命令见 DEPLOYMENT.md 第 3.4 节。
+- **写 Docker/系统配置务必用无 BOM 的 UTF-8**，否则 Docker Desktop 解析 JSON 崩溃（本次踩过）。
+- **git 命令需要提权执行**（沙箱对 `.git` 只读）；`git status` 在沙箱内可读但 commit/push 需 escalation。
+
+---
+
+## 3. 代码架构速览
+
+pnpm/turbo monorepo：
+
+```
+apps/
+  web/      # 主应用前端（React Router SPA + Vite，nginx 托管）
+  admin/    # 管理员后台 god-mode（React Router SPA，独立容器）
+  space/    # 公开分享页（独立容器）
+  live/     # 实时协作（Node，HocusPocus 编辑器后端）
+  api/      # Django 后端（api/worker/beat-worker/migrator 共用镜像）
+  proxy/    # Caddy 反向代理（统一入口 80/443）
+packages/
+  constants/ # 常量（含角色、端点等）
+  i18n/      # 多语言（本会话改造：运行时 fetch 加载）
+  services/  # 前端 API 请求层
+  types/     # 前后端共享 TS 类型
+  ui/, propel/, utils/, hooks/ 等
+```
+
+### 关键代码落点
+
+| 需求 | 位置 |
+|---|---|
+| 后端角色/权限 | `apps/api/plane/app/permissions/base.py`（`class ROLE(Enum)`） |
+| 后端权限校验 | `apps/api/plane/app/permissions/*.py`（按 API 视图挂载） |
+| 成员/邀请序列化 | `apps/api/plane/api/serializers/member.py`、`invite.py` |
+| 前端角色常量 | `packages/constants/src/`（角色、端点等） |
+| 实例配置（LLM 开关等） | `apps/api/plane/license/api/views/instance.py`（`has_llm_configured` 等字段） |
+| 翻译 | `packages/i18n/src/locales/<lang>/<ns>.json` |
+| API 路由注册 | `apps/api/plane/urls.py` 及各 app 的 `urls.py` |
+
+---
+
+## 4. 自定义开发工作流
+
+### 改翻译（无需重建）
+
+编辑 `packages/i18n/src/locales/zh-CN/*.json` 等 → 浏览器 Ctrl+F5。
+
+### 改前端/后端代码（需要重建对应镜像）
+
+```powershell
+cd D:\_Code\Server\plane
+
+# 只改 web 前端 / i18n 包
+docker compose build web && docker compose up -d web
+
+# 只改 api 后端
+docker compose build api worker beat-worker migrator && docker compose up -d api worker beat-worker migrator
+
+# 全量
+docker compose build && docker compose up -d
+```
+
+> 注意：重建前如新增了基础镜像引用，先 `docker pull` 预拉（见 DEPLOYMENT.md 3.4）。
+
+### 提交推送
+
+```powershell
+git add -A
+git commit -m "feat: ..."
+git push origin preview
+```
+
+---
+
+## 5. 下一步定制方向："接入 Codex 角色"
+
+（待与用户确认具体含义，两种可能的解读都给出落点）
+
+### 解读 A：给 Plane 加一个 AI 助手（Codex 作为工作区成员/机器人账号）
+
+现状摸底：
+- api **目前没有** LLM/AI 模块（搜不到 openai/langchain 引用；`.env.example` 里的 `OPENAI_API_KEY` 是废弃字段）。
+- 实例配置里有 `has_llm_configured` 开关，但无实际实现。
+
+建议路线：
+1. 后端新建一个 AI 服务（Django app 或 `plane/app/services/`），封装对 Codex/OpenAI API 的调用（配置项加进实例配置或 `.env`）。
+2. 提供 REST 端点（如 `POST /api/workspaces/<slug>/ai/...`），用工作区成员身份+权限校验（复用 `permissions/base.py`）。
+3. 前端在 `apps/web` 加入口（如 issue 详情页"Ask Codex"），请求走 `packages/services`。
+4. 若要"Codex 能自己操作任务"，需要实现机器人身份（仿照现有 `bot_user_` 逻辑，`workspace_seed_task.py` 有先例）+ 任务 CRUD 端点调用。
+
+### 解读 B：在 Plane 的权限体系里新增一个名为 "Codex" 的角色
+
+落点：
+- 后端：`apps/api/plane/app/permissions/base.py` 的 `ROLE` 枚举 + 各 `permissions/*.py` 的 `allowed_roles` 判断；成员表 `apps/api/plane/db/models/workspace.py`（`WorkspaceMember.role`）。
+- 前端：`packages/constants/src/` 的角色常量与展示文案（含翻译）。
+- 注意：角色校验遍布后端各视图，新增角色需全量审计 `allowed_roles`，工作量较大，建议优先考虑解读 A 的"机器人成员"方案。
+
+### 建议先做的准备
+
+1. 与用户确认"Codex 角色"的具体行为（AI 问答助手？自动建任务？权限角色？）。
+2. 在 `docs/` 或 `HANDOVER.md` 补充需求说明。
+3. 先提交当前工作区改动，保持基线干净。
+
+---
+
+## 6. 注意事项 / 遗留项
+
+- **space 容器**仍是上一版静态打包的 i18n（本会话只重建了 web）；如 space 需要热更新翻译，需重建 `docker compose build space`。
+- **SMTP 未配置**：邮件相关功能（密码重置、邀请邮件）不可用，需在 god-mode 或实例配置里配置 SMTP。
+- **默认口令**：Postgres/RabbitMQ/MinIO 用的是 `.env.example` 默认值，仅限本机试用，暴露到公网前必须改。
+- **数据卷**：`pgdata`/`redisdata`/`uploads`/`rabbitmq_data`，`docker compose down -v` 会清空。
+- **本地提交**：当前 HEAD=`3d7dcff` 已推送；后续所有改动记得 `git add/commit/push`。
+- **沙箱提权**：Docker、git 写操作、读系统配置都需要 `require_escalated`。
+
+---
+
+## 7. 常用命令速查
+
+```powershell
+cd D:\_Code\Server\plane
+docker compose ps                       # 状态
+docker compose logs -f api              # 后端日志
+docker compose up -d                    # 启动
+docker compose down                     # 停止（留数据）
+curl.exe http://localhost/api/instances/ # 健康检查
+git push origin preview                 # 推送
+```
