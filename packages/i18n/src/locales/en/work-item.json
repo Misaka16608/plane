@@ -616,6 +616,11 @@
     "target_executor": "Executor",
     "target_splitter": "Splitter",
     "confirm": "Confirm",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "assign_success": "Workflow handlers updated",
+    "advance_success": "Work item advanced",
+    "return_success": "Work item returned",
+    "escalate_success": "Work item escalated",
+    "action_error": "Workflow action failed"
   }
 }

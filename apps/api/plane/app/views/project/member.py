@@ -5,7 +5,7 @@
 # Third Party imports
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Min
+from django.db.models import Min, Q
 
 # Module imports
 from .base import BaseViewSet, BaseAPIView
@@ -18,7 +18,7 @@ from plane.app.serializers import (
 
 from plane.app.permissions import WorkspaceUserPermission
 
-from plane.db.models import Project, ProjectMember, ProjectUserProperty, WorkspaceMember
+from plane.db.models import BotTypeEnum, Project, ProjectMember, ProjectUserProperty, WorkspaceMember
 from plane.bgtasks.project_add_user_email_task import project_add_user_email
 from plane.utils.host import base_host
 from plane.app.permissions.base import allow_permission, ROLE
@@ -34,9 +34,9 @@ class ProjectMemberViewSet(BaseViewSet):
         return self.filter_queryset(
             super()
             .get_queryset()
+            .filter(Q(member__is_bot=False) | Q(member__bot_type=BotTypeEnum.CODEX.value))
             .filter(workspace__slug=self.kwargs.get("slug"))
             .filter(project_id=self.kwargs.get("project_id"))
-            .filter(member__is_bot=False)
             .filter()
             .select_related("project")
             .select_related("member")
@@ -157,9 +157,9 @@ class ProjectMemberViewSet(BaseViewSet):
     def list(self, request, slug, project_id):
         # Get the list of project members for the project
         project_members = ProjectMember.objects.filter(
+            Q(member__is_bot=False) | Q(member__bot_type=BotTypeEnum.CODEX.value),
             project_id=project_id,
             workspace__slug=slug,
-            member__is_bot=False,
             is_active=True,
             member__member_workspace__workspace__slug=slug,
             member__member_workspace__is_active=True,
@@ -179,10 +179,10 @@ class ProjectMemberViewSet(BaseViewSet):
 
         project_member = (
             ProjectMember.objects.filter(
+                Q(member__is_bot=False) | Q(member__bot_type=BotTypeEnum.CODEX.value),
                 pk=pk,
                 project_id=project_id,
                 workspace__slug=slug,
-                member__is_bot=False,
                 is_active=True,
             )
             .select_related("project", "member", "workspace")

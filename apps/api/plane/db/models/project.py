@@ -217,8 +217,6 @@ class ProjectMember(ProjectBaseModel):
     )
     comment = models.TextField(blank=True, null=True)
     role = models.PositiveSmallIntegerField(choices=ROLE_CHOICES, default=5)
-    frontend_path = models.CharField(max_length=1024, blank=True, default="")
-    backend_path = models.CharField(max_length=1024, blank=True, default="")
     view_props = models.JSONField(default=get_default_props)
     default_props = models.JSONField(default=get_default_props)
     preferences = models.JSONField(default=get_default_preferences)

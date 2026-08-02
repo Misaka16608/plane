@@ -132,8 +132,13 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
       (m) => m.member !== this.userStore?.data?.id,
       (m) => this.memberRoot?.memberMap?.[m.member]?.display_name?.toLowerCase(),
     ]);
-    //filter out bots
-    const memberIds = members.filter((m) => !this.memberRoot?.memberMap?.[m.member]?.is_bot).map((m) => m.member);
+    //filter out bots (keep the Codex bot so it can be assigned in the workflow)
+    const memberIds = members
+      .filter((m) => {
+        const details = this.memberRoot?.memberMap?.[m.member];
+        return !details?.is_bot || details?.bot_type === "CODEX";
+      })
+      .map((m) => m.member);
     return memberIds;
   });
 
@@ -143,8 +148,11 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
    */
   getFilteredWorkspaceMemberIds = computedFn((workspaceSlug: string) => {
     let members = Object.values(this.workspaceMemberMap?.[workspaceSlug] ?? {});
-    //filter out bots and inactive members
-    members = members.filter((m) => !this.memberRoot?.memberMap?.[m.member]?.is_bot);
+    //filter out bots (keep the Codex bot so it can be assigned in the workflow)
+    members = members.filter((m) => {
+      const details = this.memberRoot?.memberMap?.[m.member];
+      return !details?.is_bot || details?.bot_type === "CODEX";
+    });
 
     // Use filters store to get filtered member ids
     const memberIds = this.filtersStore.getFilteredMemberIds(

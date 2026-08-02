@@ -616,6 +616,11 @@
     "target_executor": "执行者",
     "target_splitter": "拆分者",
     "confirm": "确认",
-    "cancel": "取消"
+    "cancel": "取消",
+    "assign_success": "工作流负责人已更新",
+    "advance_success": "工作项已推进",
+    "return_success": "工作项已退回",
+    "escalate_success": "工作项已上抛",
+    "action_error": "工作流操作失败"
   }
 }

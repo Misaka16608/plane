@@ -45,7 +45,6 @@ from .issue import (
     IssueVote,
     IssueVersion,
     IssueDescriptionVersion,
-    WorkflowStage,
 )
 from .module import Module, ModuleIssue, ModuleLink, ModuleMember, ModuleUserProperties
 from .notification import EmailNotificationLog, Notification, UserNotificationPreference

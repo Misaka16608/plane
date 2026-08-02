@@ -17,6 +17,10 @@ export abstract class APIService {
     this.axiosInstance = create({
       baseURL,
       withCredentials: true,
+      // Force the browser to revalidate API responses instead of serving a
+      // stale cached payload (e.g. member lists fetched before a bot account
+      // was created).
+      headers: { "Cache-Control": "no-cache" },
     });
 
     this.setupInterceptors();
