@@ -125,25 +125,16 @@ Copy-Item apps/api/.env.example apps/api/.env
 
 （当前仓库里这些文件已配置好，重装环境时按上述内容核对即可。）
 
-### 4. 预拉取基础镜像（关键步骤）
+### 4. 开启系统全局代理（关键前提）
 
-**Docker 的 `docker pull` 走代理没问题，但 BuildKit（`docker compose build` 拉基础镜像）不走代理。**
-所以构建前必须先用 `docker pull` 把全部基础镜像拉下来，BuildKit 才会直接用本地镜像：
+`docker compose build` 时 BuildKit 会直接从 Docker 虚拟机内拉取基础镜像，
+**必须让虚拟机的流量也走代理**，否则会卡在 `auth.docker.io` 拉取 token 失败。
 
-```powershell
-docker pull docker/dockerfile:1.7
-docker pull node:22-alpine
-docker pull nginx:1.31-alpine
-docker pull python:3.12.10-alpine
-docker pull caddy:2.11.3-builder-alpine
-docker pull caddy:2.11.3-alpine
-docker pull postgres:15.7-alpine
-docker pull valkey/valkey:7.2.11-alpine
-docker pull rabbitmq:3.13.6-management-alpine
-docker pull minio/minio
-```
-
-如果某个镜像拉取报 `EOF` / `short read`，是代理瞬时抖动，重试即可。
+- 构建前把代理工具（mihomo/Clash）切换到**系统全局模式（TUN）**，确保
+  WSL2 / Docker 虚拟机的直连流量也经过代理。
+- 如果构建时仍报 `auth.docker.io` / `registry-1.docker.io` 连接失败，说明
+  全局代理未生效，请检查代理工具的 TUN / 全局开关后再重试。
+- 开启全局代理后**无需任何预拉镜像步骤**，直接构建即可。
 
 ### 5. 构建并启动
 
@@ -172,7 +163,7 @@ docker compose ps                          # 全部 Up / healthy
 | GitHub HTTPS 克隆失败 | 直连被墙 | 用 SSH over 443（`ssh.github.com:443`）克隆 |
 | `auth.docker.io` 拉取 token 失败 | Docker Hub 认证域名被墙 | Docker Desktop 设置里配置手动代理 7890 |
 | 旧 Docker Desktop 反复崩溃（`com.docker.build` exit 1） | 系统状态损坏 + daemon.json 带 UTF-8 BOM | 完全卸载重装 Docker Desktop；配置文件一律用无 BOM 的 UTF-8 写入 |
-| BuildKit 构建时拉基础镜像失败 | BuildKit 不走 Docker Desktop 代理 | 构建前 `docker pull` 预拉全部基础镜像（见第三节第 4 步） |
+| BuildKit 构建时拉基础镜像失败 | Docker 虚拟机内 BuildKit 的直连流量没走代理 | 构建前开启代理的**系统全局模式（TUN）**（见第三节第 4 步） |
 | proxy 镜像构建失败（`sum.golang.org` TLS 超时） | Go 校验数据库被墙 | `apps/proxy/Dockerfile.ce` 加 `ENV GOSUMDB=off` |
 | proxy 容器无限重启（Caddyfile 解析错误） | compose 没给 Caddy 传 `SITE_ADDRESS` 等变量 | `docker-compose.yml` 的 proxy 服务补上 `SITE_ADDRESS`、`CERT_*`、`TRUSTED_PROXIES` |
 | live 容器崩溃（缺 env） | live 服务需要 `API_BASE_URL`、`LIVE_SERVER_SECRET_KEY`、`REDIS_URL` | compose 的 live 服务补上三个环境变量 |

@@ -42,7 +42,8 @@
 - **Docker 代理配置（两处，勿随意改）**：
   - Docker Desktop 设置 `%APPDATA%\Docker\settings-store.json`：`ProxyHTTPMode=manual` + `OverrideProxyHTTP/HTTPS=http://127.0.0.1:7890`
   - `%USERPROFILE%\.docker\daemon.json`：`proxies` 指向同一代理
-- **构建前必须预拉基础镜像**（BuildKit 拉基础镜像不走代理）：命令见 DEPLOYMENT.md 第 3.4 节。
+- **构建前需开启代理的全局/TUN 模式**（Docker 虚拟机内 BuildKit 的直连流量要走代理），
+  否则 `docker compose build` 拉基础镜像会失败；详见 DEPLOYMENT.md 第 3.4 节。
 - **写 Docker/系统配置务必用无 BOM 的 UTF-8**，否则 Docker Desktop 解析 JSON 崩溃（本次踩过）。
 - **git 命令需要提权执行**（沙箱对 `.git` 只读）；`git status` 在沙箱内可读但 commit/push 需 escalation。
 
@@ -103,7 +104,7 @@ docker compose build api worker beat-worker migrator && docker compose up -d api
 docker compose build && docker compose up -d
 ```
 
-> 注意：重建前如新增了基础镜像引用，先 `docker pull` 预拉（见 DEPLOYMENT.md 3.4）。
+> 注意：重建前确保代理处于全局/TUN 模式（见 DEPLOYMENT.md 3.4），否则 BuildKit 拉基础镜像会失败。
 
 ### 提交推送
 
