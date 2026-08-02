@@ -9,9 +9,6 @@ import { observer } from "mobx-react";
 import { PageHead } from "@/components/core/page-title";
 // hooks
 import { useWorkspace } from "@/hooks/store/use-workspace";
-// local imports
-import { WorkspaceActiveCyclesUpgrade } from "@/components/active-cycles/workspace-active-cycles-upgrade";
-
 function WorkspaceActiveCyclesPage() {
   const { currentWorkspace } = useWorkspace();
   // derived values
@@ -20,7 +17,6 @@ function WorkspaceActiveCyclesPage() {
   return (
     <>
       <PageHead title={pageTitle} />
-      <WorkspaceActiveCyclesUpgrade />
     </>
   );
 }

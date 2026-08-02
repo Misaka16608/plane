@@ -29,7 +29,7 @@ i18nInstance
           return response.json();
         })
         .then((data) => callback(null, data))
-        .catch((error) => callback(error));
+        .catch((error) => callback(error, {}));
     })
   );
 
