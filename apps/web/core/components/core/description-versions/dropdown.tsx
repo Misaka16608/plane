@@ -10,7 +10,7 @@ import { History } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import type { TDescriptionVersion } from "@plane/types";
 import { CustomMenu } from "@plane/ui";
-import { calculateTimeAgo } from "@plane/utils";
+import { calculateTimeAgo, getDateFnsLocaleForLanguage } from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 // local imports
@@ -35,7 +35,7 @@ export const DescriptionVersionsDropdown = observer(function DescriptionVersions
     ? getUserDetails(latestVersion?.owned_by)?.display_name
     : entityInformation.createdByDisplayName;
   // translation
-  const { t } = useTranslation();
+  const { t, currentLocale } = useTranslation();
 
   return (
     <CustomMenu
@@ -47,7 +47,7 @@ export const DescriptionVersionsDropdown = observer(function DescriptionVersions
           <p className="text-11">
             {t("description_versions.last_edited_by")}{" "}
             <span className="font-medium">{lastUpdatedByUserDisplayName ?? t("common.deactivated_user")}</span>{" "}
-            {calculateTimeAgo(lastUpdatedAt)}
+            {calculateTimeAgo(lastUpdatedAt, getDateFnsLocaleForLanguage(currentLocale))}
           </p>
         </div>
       }

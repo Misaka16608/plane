@@ -6,9 +6,10 @@
 
 import { useRouter } from "next/navigation";
 // plane types
+import { useTranslation } from "@plane/i18n";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import type { TActivityEntityData, TProjectEntityData } from "@plane/types";
-import { calculateTimeAgo } from "@plane/utils";
+import { calculateTimeAgo, getDateFnsLocaleForLanguage } from "@plane/utils";
 // components
 import { ListItem } from "@/components/core/list";
 import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
@@ -23,6 +24,7 @@ export function RecentProject(props: BlockProps) {
   const { activity, ref, workspaceSlug } = props;
   // router
   const router = useRouter();
+  const { currentLocale } = useTranslation();
   // derived values
   const projectDetails: TProjectEntityData = activity.entity_data as TProjectEntityData;
 
@@ -45,7 +47,7 @@ export function RecentProject(props: BlockProps) {
       }
       appendTitleElement={
         <div className="flex-shrink-0 text-11 font-medium text-placeholder">
-          {calculateTimeAgo(activity.visited_at)}
+          {calculateTimeAgo(activity.visited_at, getDateFnsLocaleForLanguage(currentLocale))}
         </div>
       }
       quickActionElement={

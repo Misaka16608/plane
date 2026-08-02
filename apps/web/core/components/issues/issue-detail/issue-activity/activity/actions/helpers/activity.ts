@@ -12,18 +12,20 @@ export const getRelationActivityContent = (activity: TIssueActivity | undefined)
   switch (activity.field) {
     case "blocking":
       return activity.old_value === ""
-        ? `marked this work item is blocking work item `
-        : `removed the blocking work item `;
+        ? "issue_activity.blocking.added_this_work_item"
+        : "issue_activity.blocking.removed";
     case "blocked_by":
       return activity.old_value === ""
-        ? `marked this work item is being blocked by `
-        : `removed this work item being blocked by work item `;
+        ? "issue_activity.blocked_by.added_this_work_item"
+        : "issue_activity.blocked_by.removed_this_work_item";
     case "duplicate":
       return activity.old_value === ""
-        ? `marked this work item as duplicate of `
-        : `removed this work item as a duplicate of `;
+        ? "issue_activity.duplicate.added_this_work_item"
+        : "issue_activity.duplicate.removed_this_work_item";
     case "relates_to":
-      return activity.old_value === "" ? `marked that this work item relates to ` : `removed the relation from `;
+      return activity.old_value === ""
+        ? "issue_activity.relates_to.added_this_work_item"
+        : "issue_activity.relates_to.removed";
   }
 
   return;

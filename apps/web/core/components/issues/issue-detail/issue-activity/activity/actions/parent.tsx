@@ -6,10 +6,12 @@
 
 import { observer } from "mobx-react";
 import { ParentPropertyIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
 import { IssueActivityBlockComponent, IssueLink } from "./";
+import { interpolateNodes } from "./helpers/i18n";
 
 type TIssueParentActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 
@@ -19,6 +21,7 @@ export const IssueParentActivity = observer(function IssueParentActivity(props: 
   const {
     activity: { getActivityById },
   } = useIssueDetail();
+  const { t } = useTranslation();
 
   const activity = getActivityById(activityId);
 
@@ -29,16 +32,21 @@ export const IssueParentActivity = observer(function IssueParentActivity(props: 
       activityId={activityId}
       ends={ends}
     >
-      <>
-        {activity.new_value ? `set the parent to ` : `removed the parent `}
-        {activity.new_value ? (
-          <span className="font-medium text-primary">{activity.new_value}</span>
-        ) : (
-          <span className="font-medium text-primary">{activity.old_value}</span>
-        )}
-        {showIssue && (activity.new_value ? ` for ` : ` from `)}
-        {showIssue && <IssueLink activityId={activityId} />}.
-      </>
+      {interpolateNodes(
+        t,
+        showIssue
+          ? activity.new_value
+            ? "issue_activity.parent.set_for_issue"
+            : "issue_activity.parent.removed_from_issue"
+          : activity.new_value
+            ? "issue_activity.parent.set"
+            : "issue_activity.parent.removed",
+        {
+          parent: <span className="font-medium text-primary">{activity.new_value || activity.old_value}</span>,
+          issue: showIssue ? <IssueLink activityId={activityId} /> : undefined,
+        }
+      )}
+      {t("issue_activity.period")}
     </IssueActivityBlockComponent>
   );
 });

@@ -6,10 +6,12 @@
 
 import { observer } from "mobx-react";
 import { AlignLeft } from "lucide-react";
+import { useTranslation } from "@plane/i18n";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
 import { IssueActivityBlockComponent, IssueLink } from "./";
+import { interpolateNodes } from "./helpers/i18n";
 
 type TIssueDescriptionActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 
@@ -19,6 +21,7 @@ export const IssueDescriptionActivity = observer(function IssueDescriptionActivi
   const {
     activity: { getActivityById },
   } = useIssueDetail();
+  const { t } = useTranslation();
 
   const activity = getActivityById(activityId);
 
@@ -29,11 +32,12 @@ export const IssueDescriptionActivity = observer(function IssueDescriptionActivi
       activityId={activityId}
       ends={ends}
     >
-      <>
-        updated the description
-        {showIssue ? ` of ` : ``}
-        {showIssue && <IssueLink activityId={activityId} />}.
-      </>
+      {interpolateNodes(
+        t,
+        showIssue ? "issue_activity.description.updated_of_issue" : "issue_activity.description.updated",
+        { issue: showIssue ? <IssueLink activityId={activityId} /> : undefined }
+      )}
+      {t("issue_activity.period")}
     </IssueActivityBlockComponent>
   );
 });

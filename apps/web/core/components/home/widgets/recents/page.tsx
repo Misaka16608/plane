@@ -5,12 +5,13 @@
  */
 
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@plane/i18n";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import { PageIcon } from "@plane/propel/icons";
 // plane import
 import type { TActivityEntityData, TPageEntityData } from "@plane/types";
 import { Avatar } from "@plane/ui";
-import { calculateTimeAgo, getFileURL, getPageName } from "@plane/utils";
+import { calculateTimeAgo, getDateFnsLocaleForLanguage, getFileURL, getPageName } from "@plane/utils";
 import { ListItem } from "@/components/core/list";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
@@ -25,6 +26,7 @@ export function RecentPage(props: BlockProps) {
   const { activity, ref, workspaceSlug } = props;
   // router
   const router = useRouter();
+  const { currentLocale } = useTranslation();
   // store hooks
   const { getUserDetails } = useMember();
   // derived values
@@ -60,7 +62,7 @@ export function RecentPage(props: BlockProps) {
       }
       appendTitleElement={
         <div className="flex-shrink-0 text-11 font-medium text-placeholder">
-          {calculateTimeAgo(activity.visited_at)}
+          {calculateTimeAgo(activity.visited_at, getDateFnsLocaleForLanguage(currentLocale))}
         </div>
       }
       quickActionElement={

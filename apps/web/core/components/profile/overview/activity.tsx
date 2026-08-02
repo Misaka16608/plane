@@ -12,7 +12,7 @@ import { useTranslation } from "@plane/i18n";
 import { Avatar } from "@plane/propel/avatar";
 import { EmptyStateCompact } from "@plane/propel/empty-state";
 import { Loader, Card } from "@plane/ui";
-import { calculateTimeAgo, getFileURL } from "@plane/utils";
+import { calculateTimeAgo, getDateFnsLocaleForLanguage, getFileURL } from "@plane/utils";
 // components
 import { ActivityMessage, IssueLink } from "@/components/core/activity";
 // constants
@@ -29,7 +29,7 @@ export const ProfileActivity = observer(function ProfileActivity() {
   const { workspaceSlug, userId } = useParams();
   // store hooks
   const { data: currentUser } = useUser();
-  const { t } = useTranslation();
+  const { t, currentLocale } = useTranslation();
 
   const { data: userProfileActivity } = useSWR(
     workspaceSlug && userId ? USER_PROFILE_ACTIVITY(workspaceSlug.toString(), userId.toString(), {}) : null,
@@ -71,7 +71,9 @@ export const ProfileActivity = observer(function ProfileActivity() {
                         </span>
                       )}
                     </p>
-                    <p className="text-11 whitespace-nowrap text-secondary">{calculateTimeAgo(activity.created_at)}</p>
+                    <p className="text-11 whitespace-nowrap text-secondary">
+                      {calculateTimeAgo(activity.created_at, getDateFnsLocaleForLanguage(currentLocale))}
+                    </p>
                   </div>
                 </div>
               ))}

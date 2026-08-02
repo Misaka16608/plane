@@ -7,13 +7,14 @@
 import { observer } from "mobx-react";
 
 import { MODULE_TRACKER_ELEMENTS } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { CopyIcon, EditIcon, TrashIcon } from "@plane/propel/icons";
 // plane types
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { ILinkDetails } from "@plane/types";
 // plane ui
-import { getIconForLink, copyTextToClipboard, calculateTimeAgo } from "@plane/utils";
+import { getIconForLink, copyTextToClipboard, calculateTimeAgo, getDateFnsLocaleForLanguage } from "@plane/utils";
 // helpers
 //
 // hooks
@@ -35,6 +36,7 @@ export const ModulesLinksListItem = observer(function ModulesLinksListItem(props
   const createdByDetails = getUserDetails(link.created_by);
   // platform os
   const { isMobile } = usePlatformOS();
+  const { currentLocale } = useTranslation();
 
   const Icon = getIconForLink(link.url);
 
@@ -102,7 +104,7 @@ export const ModulesLinksListItem = observer(function ModulesLinksListItem(props
       </div>
       <div className="px-5">
         <p className="mt-0.5 flex items-center gap-1.5 stroke-[1.5] text-11 text-tertiary">
-          Added {calculateTimeAgo(link.created_at)}{" "}
+          Added {calculateTimeAgo(link.created_at, getDateFnsLocaleForLanguage(currentLocale))}{" "}
           {createdByDetails && (
             <>by {createdByDetails?.is_bot ? createdByDetails?.first_name + " Bot" : createdByDetails?.display_name}</>
           )}

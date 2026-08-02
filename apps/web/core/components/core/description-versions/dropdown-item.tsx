@@ -9,7 +9,7 @@ import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 import type { TDescriptionVersion } from "@plane/types";
 import { Avatar, CustomMenu } from "@plane/ui";
-import { calculateTimeAgo, getFileURL } from "@plane/utils";
+import { calculateTimeAgo, getDateFnsLocaleForLanguage, getFileURL } from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 
@@ -25,7 +25,7 @@ export const DescriptionVersionsDropdownItem = observer(function DescriptionVers
   // derived values
   const versionCreator = version.owned_by ? getUserDetails(version.owned_by) : null;
   // translation
-  const { t } = useTranslation();
+  const { t, currentLocale } = useTranslation();
 
   return (
     <CustomMenu.MenuItem key={version.id} className="flex items-center gap-1" onClick={() => onClick(version.id)}>
@@ -38,7 +38,7 @@ export const DescriptionVersionsDropdownItem = observer(function DescriptionVers
       </span>
       <p className="flex items-center gap-1.5 text-11 text-secondary">
         <span className="font-medium">{versionCreator?.display_name ?? t("common.deactivated_user")}</span>
-        <span>{calculateTimeAgo(version.last_saved_at)}</span>
+        <span>{calculateTimeAgo(version.last_saved_at, getDateFnsLocaleForLanguage(currentLocale))}</span>
       </p>
     </CustomMenu.MenuItem>
   );

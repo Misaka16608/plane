@@ -5,9 +5,10 @@
  */
 
 import { NewTabIcon, EditIcon, TrashIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
-import { getIconForLink, copyTextToClipboard, calculateTimeAgo } from "@plane/utils";
+import { getIconForLink, copyTextToClipboard, calculateTimeAgo, getDateFnsLocaleForLanguage } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
@@ -30,6 +31,7 @@ export function IssueLinkDetail(props: TIssueLinkDetail) {
     link: { getLinkById },
     setIssueLinkData,
   } = useIssueDetail();
+  const { currentLocale } = useTranslation();
   const { getUserDetails } = useMember();
   const { isMobile } = usePlatformOS();
   const linkDetail = getLinkById(linkId);
@@ -110,7 +112,7 @@ export function IssueLinkDetail(props: TIssueLinkDetail) {
 
         <div className="px-5">
           <p className="mt-0.5 stroke-[1.5] text-11 text-tertiary">
-            Added {calculateTimeAgo(linkDetail.created_at)}
+            Added {calculateTimeAgo(linkDetail.created_at, getDateFnsLocaleForLanguage(currentLocale))}
             <br />
             {createdByDetails && (
               <>

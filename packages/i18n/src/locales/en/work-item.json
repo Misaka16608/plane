@@ -422,5 +422,147 @@
       "label": "Epic Title",
       "required": "Epic title is required."
     }
+  },
+  "issue_activity": {
+    "work_item_deleted": "a work item",
+    "work_item_deleted_tooltip": "This work item has been deleted",
+    "link_word": "link",
+    "period": ".",
+    "work_items_fallback": "Work items",
+    "issue": {
+      "created": "created {{issue}}",
+      "deleted": "deleted {{issue}}",
+      "converted_to_epic": "converted {{issue}} to an epic"
+    },
+    "default": {
+      "created": "created the work item.",
+      "created_via": "created the work item via {{source}}.",
+      "deleted": "deleted a work item."
+    },
+    "epic": {
+      "converted_to_work_item": "converted {{issue}} to a work item"
+    },
+    "archived": "archived {{issue}}",
+    "restored": "restored {{issue}}",
+    "archived_work_item": "archived the work item",
+    "restored_work_item": "restored the work item",
+    "assignee": {
+      "added": "added a new assignee {{user}}",
+      "added_to_issue": "added a new assignee {{user}} to {{issue}}",
+      "removed": "removed the assignee {{user}}",
+      "removed_from_issue": "removed the assignee {{user}} from {{issue}}"
+    },
+    "attachment": {
+      "uploaded": "uploaded a new attachment",
+      "uploaded_to_issue": "uploaded a new attachment to {{issue}}",
+      "removed": "removed an attachment",
+      "removed_from_issue": "removed an attachment from {{issue}}"
+    },
+    "description": {
+      "updated": "updated the description",
+      "updated_of_issue": "updated the description of {{issue}}"
+    },
+    "estimate": {
+      "removed": "removed the estimate point",
+      "removed_from_issue": "removed the estimate point from {{issue}}",
+      "set": "set the estimate point to {{value}}",
+      "set_for_issue": "set the estimate point to {{value}} for {{issue}}"
+    },
+    "label": {
+      "added": "added a new label {{label}}",
+      "added_to_issue": "added a new label {{label}} to {{issue}}",
+      "removed": "removed the label {{label}}",
+      "removed_from_issue": "removed the label {{label}} from {{issue}}"
+    },
+    "link": {
+      "added": "added this {{link}}",
+      "added_to_issue": "added this {{link}} to {{issue}}",
+      "updated": "updated the {{link}}",
+      "updated_from_issue": "updated the {{link}} from {{issue}}",
+      "removed": "removed this {{link}}",
+      "removed_from_issue": "removed this {{link}} from {{issue}}"
+    },
+    "cycle": {
+      "added": "added {{issue}} to the cycle {{cycle}}",
+      "added_this_work_item": "added this work item to the cycle {{cycle}}",
+      "set": "set the cycle to {{cycle}}",
+      "removed": "removed {{issue}} from the cycle {{cycle}}",
+      "removed_this_work_item": "removed the work item from the cycle {{cycle}}"
+    },
+    "module": {
+      "added": "added {{issue}} to the module {{module}}",
+      "added_this_work_item": "added this work item to the module {{module}}",
+      "set": "set the module to {{module}}",
+      "removed": "removed {{issue}} from the module {{module}}",
+      "removed_this_work_item": "removed the work item from the module {{module}}"
+    },
+    "title": {
+      "set": "set the title to {{title}}",
+      "set_of_issue": "set the title to {{title}} of {{issue}}"
+    },
+    "name": {
+      "set": "set the name to {{name}}"
+    },
+    "parent": {
+      "removed": "removed the parent {{parent}}",
+      "removed_from_issue": "removed the parent {{parent}} from {{issue}}",
+      "set": "set the parent to {{parent}}",
+      "set_for_issue": "set the parent to {{parent}} for {{issue}}"
+    },
+    "priority": {
+      "set": "set the priority to {{priority}}",
+      "set_for_issue": "set the priority to {{priority}} for {{issue}}",
+      "none": "None"
+    },
+    "relates_to": {
+      "added": "marked that {{issue}} relates to {{value}}.",
+      "added_this_work_item": "marked that this work item relates to {{value}}.",
+      "removed": "removed the relation from {{value}}."
+    },
+    "blocking": {
+      "added": "marked {{issue}} is blocking work item {{value}}.",
+      "added_this_work_item": "marked this work item is blocking work item {{value}}.",
+      "removed": "removed the blocking work item {{value}}."
+    },
+    "blocked_by": {
+      "added": "marked {{issue}} is being blocked by {{value}}.",
+      "added_this_work_item": "marked this work item is being blocked by {{value}}.",
+      "removed": "removed {{issue}} being blocked by work item {{value}}.",
+      "removed_this_work_item": "removed this work item being blocked by work item {{value}}."
+    },
+    "duplicate": {
+      "added": "marked {{issue}} as duplicate of {{value}}.",
+      "added_this_work_item": "marked this work item as duplicate of {{value}}.",
+      "removed": "removed {{issue}} as a duplicate of {{value}}.",
+      "removed_this_work_item": "removed this work item as a duplicate of {{value}}."
+    },
+    "state": {
+      "set": "set the state to {{state}}",
+      "set_for_issue": "set the state to {{state}} for {{issue}}"
+    },
+    "start_date": {
+      "removed": "removed the start date",
+      "removed_from_issue": "removed the start date from {{issue}}",
+      "set": "set the start date to {{date}}",
+      "set_for_issue": "set the start date to {{date}} for {{issue}}"
+    },
+    "target_date": {
+      "removed": "removed the due date",
+      "removed_from_issue": "removed the due date from {{issue}}",
+      "set": "set the due date to {{date}}",
+      "set_for_issue": "set the due date to {{date}} for {{issue}}"
+    },
+    "inbox": {
+      "declined_show": "declined work item",
+      "declined_no_issue": "declined this work item from intake.",
+      "snoozed_show": "snoozed work item",
+      "snoozed_no_issue": "snoozed this work item.",
+      "accepted_show": "accepted work item",
+      "accepted_no_issue": "accepted this work item from intake.",
+      "duplicate_show": "declined work item",
+      "duplicate_no_issue": "declined this work item from intake by marking a duplicate work item.",
+      "duplicate_suffix": " from intake by marking a duplicate work item.",
+      "updated": "updated intake work item status."
+    }
   }
 }

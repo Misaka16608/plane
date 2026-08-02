@@ -7,9 +7,11 @@
 import { observer } from "mobx-react";
 // hooks
 import { StatePropertyIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
 import { IssueActivityBlockComponent, IssueLink } from "./";
+import { interpolateNodes } from "./helpers/i18n";
 // icons
 
 type TIssueStateActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
@@ -20,6 +22,7 @@ export const IssueStateActivity = observer(function IssueStateActivity(props: TI
   const {
     activity: { getActivityById },
   } = useIssueDetail();
+  const { t } = useTranslation();
 
   const activity = getActivityById(activityId);
 
@@ -30,11 +33,11 @@ export const IssueStateActivity = observer(function IssueStateActivity(props: TI
       activityId={activityId}
       ends={ends}
     >
-      <>
-        set the state to <span className="font-medium text-primary">{activity.new_value}</span>
-        {showIssue ? ` for ` : ``}
-        {showIssue && <IssueLink activityId={activityId} />}.
-      </>
+      {interpolateNodes(t, showIssue ? "issue_activity.state.set_for_issue" : "issue_activity.state.set", {
+        state: <span className="font-medium text-primary">{activity.new_value}</span>,
+        issue: showIssue ? <IssueLink activityId={activityId} /> : undefined,
+      })}
+      {t("issue_activity.period")}
     </IssueActivityBlockComponent>
   );
 });

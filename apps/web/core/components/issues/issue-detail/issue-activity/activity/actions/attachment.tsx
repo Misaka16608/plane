@@ -6,10 +6,12 @@
 
 import { observer } from "mobx-react";
 import { Paperclip } from "lucide-react";
+import { useTranslation } from "@plane/i18n";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
 import { IssueActivityBlockComponent, IssueLink } from "./";
+import { interpolateNodes } from "./helpers/i18n";
 
 type TIssueAttachmentActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 
@@ -19,6 +21,7 @@ export const IssueAttachmentActivity = observer(function IssueAttachmentActivity
   const {
     activity: { getActivityById },
   } = useIssueDetail();
+  const { t } = useTranslation();
 
   const activity = getActivityById(activityId);
 
@@ -29,11 +32,18 @@ export const IssueAttachmentActivity = observer(function IssueAttachmentActivity
       activityId={activityId}
       ends={ends}
     >
-      <>
-        {activity.verb === "created" ? `uploaded a new attachment` : `removed an attachment`}
-        {showIssue && (activity.verb === "created" ? ` to ` : ` from `)}
-        {showIssue && <IssueLink activityId={activityId} />}.
-      </>
+      {interpolateNodes(
+        t,
+        showIssue
+          ? activity.verb === "created"
+            ? "issue_activity.attachment.uploaded_to_issue"
+            : "issue_activity.attachment.removed_from_issue"
+          : activity.verb === "created"
+            ? "issue_activity.attachment.uploaded"
+            : "issue_activity.attachment.removed",
+        { issue: showIssue ? <IssueLink activityId={activityId} /> : undefined }
+      )}
+      {t("issue_activity.period")}
     </IssueActivityBlockComponent>
   );
 });

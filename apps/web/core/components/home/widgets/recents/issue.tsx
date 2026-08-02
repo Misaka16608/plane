@@ -6,12 +6,13 @@
 
 import { observer } from "mobx-react";
 // plane types
+import { useTranslation } from "@plane/i18n";
 import { PriorityIcon, StateGroupIcon, WorkItemsIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { TActivityEntityData, TIssueEntityData } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
 // plane ui
-import { calculateTimeAgo, generateWorkItemLink } from "@plane/utils";
+import { calculateTimeAgo, getDateFnsLocaleForLanguage, generateWorkItemLink } from "@plane/utils";
 // components
 import { ListItem } from "@/components/core/list";
 import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
@@ -33,6 +34,7 @@ export const RecentIssue = observer(function RecentIssue(props: BlockProps) {
   const { setPeekIssue } = useIssueDetail();
   const { setPeekIssue: setPeekEpic } = useIssueDetail(EIssueServiceType.EPICS);
   const { getProjectIdentifierById } = useProject();
+  const { currentLocale } = useTranslation();
   // derived values
   const issueDetails: TIssueEntityData = activity.entity_data as TIssueEntityData;
   const projectIdentifier = getProjectIdentifierById(issueDetails?.project_id);
@@ -93,7 +95,7 @@ export const RecentIssue = observer(function RecentIssue(props: BlockProps) {
       }
       appendTitleElement={
         <div className="flex-shrink-0 text-11 font-medium text-placeholder">
-          {calculateTimeAgo(activity.visited_at)}
+          {calculateTimeAgo(activity.visited_at, getDateFnsLocaleForLanguage(currentLocale))}
         </div>
       }
       quickActionElement={

@@ -422,5 +422,147 @@
       "label": "史诗标题",
       "required": "史诗标题为必填项"
     }
+  },
+  "issue_activity": {
+    "work_item_deleted": "一个工作项",
+    "work_item_deleted_tooltip": "该工作项已被删除",
+    "link_word": "链接",
+    "period": "。",
+    "work_items_fallback": "工作项",
+    "issue": {
+      "created": "创建了 {{issue}}",
+      "deleted": "删除了 {{issue}}",
+      "converted_to_epic": "将 {{issue}} 转换为史诗"
+    },
+    "default": {
+      "created": "创建了工作项。",
+      "created_via": "通过 {{source}} 创建了工作项。",
+      "deleted": "删除了一个工作项。"
+    },
+    "epic": {
+      "converted_to_work_item": "将 {{issue}} 转换为工作项"
+    },
+    "archived": "归档了 {{issue}}",
+    "restored": "恢复了 {{issue}}",
+    "archived_work_item": "归档了工作项",
+    "restored_work_item": "恢复了工作项",
+    "assignee": {
+      "added": "添加了新的负责人 {{user}}",
+      "added_to_issue": "将 {{user}} 添加为新的负责人，指派给 {{issue}}",
+      "removed": "移除了负责人 {{user}}",
+      "removed_from_issue": "从 {{issue}} 移除了负责人 {{user}}"
+    },
+    "attachment": {
+      "uploaded": "上传了新的附件",
+      "uploaded_to_issue": "为 {{issue}} 上传了新的附件",
+      "removed": "移除了一个附件",
+      "removed_from_issue": "从 {{issue}} 移除了一个附件"
+    },
+    "description": {
+      "updated": "更新了描述",
+      "updated_of_issue": "更新了 {{issue}} 的描述"
+    },
+    "estimate": {
+      "removed": "移除了估算点",
+      "removed_from_issue": "从 {{issue}} 移除了估算点",
+      "set": "将估算点设为 {{value}}",
+      "set_for_issue": "将 {{issue}} 的估算点设为 {{value}}"
+    },
+    "label": {
+      "added": "添加了新的标签 {{label}}",
+      "added_to_issue": "为 {{issue}} 添加了新的标签 {{label}}",
+      "removed": "移除了标签 {{label}}",
+      "removed_from_issue": "从 {{issue}} 移除了标签 {{label}}"
+    },
+    "link": {
+      "added": "添加了此 {{link}}",
+      "added_to_issue": "为 {{issue}} 添加了此 {{link}}",
+      "updated": "更新了 {{link}}",
+      "updated_from_issue": "更新了 {{issue}} 的 {{link}}",
+      "removed": "移除了此 {{link}}",
+      "removed_from_issue": "从 {{issue}} 移除了此 {{link}}"
+    },
+    "cycle": {
+      "added": "将 {{issue}} 添加到周期 {{cycle}}",
+      "added_this_work_item": "将该工作项添加到周期 {{cycle}}",
+      "set": "将周期设为 {{cycle}}",
+      "removed": "从周期 {{cycle}} 中移除了 {{issue}}",
+      "removed_this_work_item": "从周期 {{cycle}} 中移除了该工作项"
+    },
+    "module": {
+      "added": "将 {{issue}} 添加到模块 {{module}}",
+      "added_this_work_item": "将该工作项添加到模块 {{module}}",
+      "set": "将模块设为 {{module}}",
+      "removed": "从模块 {{module}} 中移除了 {{issue}}",
+      "removed_this_work_item": "从模块 {{module}} 中移除了该工作项"
+    },
+    "title": {
+      "set": "将标题设为 {{title}}",
+      "set_of_issue": "将 {{issue}} 的标题设为 {{title}}"
+    },
+    "name": {
+      "set": "将名称设为 {{name}}"
+    },
+    "parent": {
+      "removed": "移除了父级 {{parent}}",
+      "removed_from_issue": "从 {{issue}} 移除了父级 {{parent}}",
+      "set": "将父级设为 {{parent}}",
+      "set_for_issue": "将 {{issue}} 的父级设为 {{parent}}"
+    },
+    "priority": {
+      "set": "将优先级设为 {{priority}}",
+      "set_for_issue": "将 {{issue}} 的优先级设为 {{priority}}",
+      "none": "无"
+    },
+    "relates_to": {
+      "added": "标记 {{issue}} 与 {{value}} 相关。",
+      "added_this_work_item": "标记该工作项与 {{value}} 相关。",
+      "removed": "移除了与 {{value}} 的关系。"
+    },
+    "blocking": {
+      "added": "标记 {{issue}} 阻塞了工作项 {{value}}。",
+      "added_this_work_item": "标记该工作项阻塞了工作项 {{value}}。",
+      "removed": "移除了被阻塞的工作项 {{value}}。"
+    },
+    "blocked_by": {
+      "added": "标记 {{issue}} 被 {{value}} 阻塞。",
+      "added_this_work_item": "标记该工作项被 {{value}} 阻塞。",
+      "removed": "移除了 {{issue}} 被工作项 {{value}} 阻塞的状态。",
+      "removed_this_work_item": "移除了该工作项被工作项 {{value}} 阻塞的状态。"
+    },
+    "duplicate": {
+      "added": "标记 {{issue}} 为 {{value}} 的重复项。",
+      "added_this_work_item": "标记该工作项为 {{value}} 的重复项。",
+      "removed": "移除了 {{issue}} 作为 {{value}} 的重复项。",
+      "removed_this_work_item": "移除了该工作项作为 {{value}} 的重复项。"
+    },
+    "state": {
+      "set": "将状态设为 {{state}}",
+      "set_for_issue": "将 {{issue}} 的状态设为 {{state}}"
+    },
+    "start_date": {
+      "removed": "移除了开始日期",
+      "removed_from_issue": "从 {{issue}} 移除了开始日期",
+      "set": "将开始日期设为 {{date}}",
+      "set_for_issue": "将 {{issue}} 的开始日期设为 {{date}}"
+    },
+    "target_date": {
+      "removed": "移除了截止日期",
+      "removed_from_issue": "从 {{issue}} 移除了截止日期",
+      "set": "将截止日期设为 {{date}}",
+      "set_for_issue": "将 {{issue}} 的截止日期设为 {{date}}"
+    },
+    "inbox": {
+      "declined_show": "拒绝了工作项",
+      "declined_no_issue": "从收件箱拒绝了该工作项。",
+      "snoozed_show": "稍后处理了工作项",
+      "snoozed_no_issue": "稍后处理该工作项。",
+      "accepted_show": "接受了工作项",
+      "accepted_no_issue": "从收件箱接受了该工作项。",
+      "duplicate_show": "拒绝了工作项",
+      "duplicate_no_issue": "因标记为重复工作项而从收件箱拒绝了该工作项。",
+      "duplicate_suffix": "（因标记为重复工作项）",
+      "updated": "更新了收件箱工作项状态。"
+    }
   }
 }

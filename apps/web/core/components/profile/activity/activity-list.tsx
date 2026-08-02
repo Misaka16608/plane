@@ -9,8 +9,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { History, MessageSquare } from "lucide-react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import type { IUserActivityResponse } from "@plane/types";
-import { calculateTimeAgo, getFileURL } from "@plane/utils";
+import { calculateTimeAgo, getDateFnsLocaleForLanguage, getFileURL } from "@plane/utils";
 // components
 import { ActivityIcon, ActivityMessage, IssueLink } from "@/components/core/activity";
 import { RichTextEditor } from "@/components/editor/rich-text";
@@ -30,6 +31,7 @@ export const ActivityList = observer(function ActivityList(props: Props) {
   // store hooks
   const { data: currentUser } = useUser();
   const { getWorkspaceBySlug } = useWorkspace();
+  const { currentLocale } = useTranslation();
   // derived values
   const workspaceId = getWorkspaceBySlug(workspaceSlug?.toString() ?? "")?.id ?? "";
 
@@ -72,7 +74,8 @@ export const ActivityList = observer(function ActivityList(props: Props) {
                             : activityItem.actor_detail.display_name}
                         </div>
                         <p className="mt-0.5 text-11 text-secondary">
-                          Commented {calculateTimeAgo(activityItem.created_at)}
+                          Commented{" "}
+                          {calculateTimeAgo(activityItem.created_at, getDateFnsLocaleForLanguage(currentLocale))}
                         </p>
                       </div>
                       <div className="issue-comments-section p-0">

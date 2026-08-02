@@ -6,10 +6,12 @@
 
 import { observer } from "mobx-react";
 import { MessageSquare } from "lucide-react";
+import { useTranslation } from "@plane/i18n";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
 import { IssueActivityBlockComponent, IssueLink } from "./";
+import { interpolateNodes } from "./helpers/i18n";
 
 type TIssueLinkActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 
@@ -19,6 +21,7 @@ export const IssueLinkActivity = observer(function IssueLinkActivity(props: TIss
   const {
     activity: { getActivityById },
   } = useIssueDetail();
+  const { t } = useTranslation();
 
   const activity = getActivityById(activityId);
 
@@ -29,47 +32,34 @@ export const IssueLinkActivity = observer(function IssueLinkActivity(props: TIss
       activityId={activityId}
       ends={ends}
     >
-      <>
-        {activity.verb === "created" ? (
-          <>
-            <span>added </span>
+      {interpolateNodes(
+        t,
+        showIssue
+          ? activity.verb === "created"
+            ? "issue_activity.link.added_to_issue"
+            : activity.verb === "updated"
+              ? "issue_activity.link.updated_from_issue"
+              : "issue_activity.link.removed_from_issue"
+          : activity.verb === "created"
+            ? "issue_activity.link.added"
+            : activity.verb === "updated"
+              ? "issue_activity.link.updated"
+              : "issue_activity.link.removed",
+        {
+          link: (
             <a
-              href={`${activity.new_value}`}
+              href={activity.verb === "created" ? `${activity.new_value}` : `${activity.old_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
             >
-              link
+              {t("issue_activity.link_word")}
             </a>
-          </>
-        ) : activity.verb === "updated" ? (
-          <>
-            <span>updated the </span>
-            <a
-              href={`${activity.old_value}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-            >
-              link
-            </a>
-          </>
-        ) : (
-          <>
-            <span>removed this </span>
-            <a
-              href={`${activity.old_value}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-            >
-              link
-            </a>
-          </>
-        )}
-        {showIssue && (activity.verb === "created" ? ` to ` : ` from `)}
-        {showIssue && <IssueLink activityId={activityId} />}.
-      </>
+          ),
+          issue: showIssue ? <IssueLink activityId={activityId} /> : undefined,
+        }
+      )}
+      {t("issue_activity.period")}
     </IssueActivityBlockComponent>
   );
 });

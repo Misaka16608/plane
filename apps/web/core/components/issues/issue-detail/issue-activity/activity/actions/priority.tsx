@@ -6,10 +6,12 @@
 
 import { observer } from "mobx-react";
 import { PriorityPropertyIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
 import { IssueActivityBlockComponent, IssueLink } from "./";
+import { interpolateNodes } from "./helpers/i18n";
 
 type TIssuePriorityActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 
@@ -19,6 +21,7 @@ export const IssuePriorityActivity = observer(function IssuePriorityActivity(pro
   const {
     activity: { getActivityById },
   } = useIssueDetail();
+  const { t } = useTranslation();
 
   const activity = getActivityById(activityId);
 
@@ -29,11 +32,11 @@ export const IssuePriorityActivity = observer(function IssuePriorityActivity(pro
       activityId={activityId}
       ends={ends}
     >
-      <>
-        set the priority to <span className="font-medium text-primary">{activity.new_value}</span>
-        {showIssue ? ` for ` : ``}
-        {showIssue && <IssueLink activityId={activityId} />}.
-      </>
+      {interpolateNodes(t, showIssue ? "issue_activity.priority.set_for_issue" : "issue_activity.priority.set", {
+        priority: <span className="font-medium text-primary">{activity.new_value}</span>,
+        issue: showIssue ? <IssueLink activityId={activityId} /> : undefined,
+      })}
+      {t("issue_activity.period")}
     </IssueActivityBlockComponent>
   );
 });

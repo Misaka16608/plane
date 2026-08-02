@@ -48,7 +48,7 @@
         "cron_expression_placeholder": "0 9 * * 1-5",
         "cron_invalid": "无效的 Cron 表达式。",
         "cron_preview": "此 Cron 表达式将运行\"{description}\"。",
-        "main_content_cron_summary": "{description} ({timezone})."
+        "main_content_cron_summary": "{description}（{timezone}）。"
       },
       "button": {
         "previous": "返回",

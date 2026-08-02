@@ -8,11 +8,13 @@ import { observer } from "mobx-react";
 // plane imports
 import { WorkItemsIcon } from "@plane/propel/icons";
 import { EInboxIssueSource } from "@plane/types";
+import { useTranslation } from "@plane/i18n";
 // hooks
 import { capitalizeFirstLetter } from "@plane/utils";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // local imports
 import { IssueActivityBlockComponent } from "./";
+import { interpolateNodes } from "./helpers/i18n";
 
 type TIssueDefaultActivity = { activityId: string; ends: "top" | "bottom" | undefined };
 
@@ -22,6 +24,7 @@ export const IssueDefaultActivity = observer(function IssueDefaultActivity(props
   const {
     activity: { getActivityById },
   } = useIssueDetail();
+  const { t } = useTranslation();
 
   const activity = getActivityById(activityId);
 
@@ -34,20 +37,13 @@ export const IssueDefaultActivity = observer(function IssueDefaultActivity(props
       icon={<WorkItemsIcon width={14} height={14} className="text-secondary" aria-hidden="true" />}
       ends={ends}
     >
-      <>
-        {activity.verb === "created" ? (
-          source && source !== EInboxIssueSource.IN_APP ? (
-            <span>
-              created the work item via{" "}
-              <span className="font-medium">{capitalizeFirstLetter(source.toLowerCase() || "")}</span>.
-            </span>
-          ) : (
-            <span> created the work item.</span>
-          )
-        ) : (
-          <span> deleted a work item.</span>
-        )}
-      </>
+      {activity.verb === "created"
+        ? source && source !== EInboxIssueSource.IN_APP
+          ? interpolateNodes(t, "issue_activity.default.created_via", {
+              source: <span className="font-medium">{capitalizeFirstLetter(source.toLowerCase() || "")}</span>,
+            })
+          : t("issue_activity.default.created")
+        : t("issue_activity.default.deleted")}
     </IssueActivityBlockComponent>
   );
 });

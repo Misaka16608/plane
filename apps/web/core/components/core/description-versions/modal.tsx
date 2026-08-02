@@ -15,7 +15,7 @@ import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { TDescriptionVersion } from "@plane/types";
 import { Avatar, EModalPosition, EModalWidth, Loader, ModalCore } from "@plane/ui";
-import { calculateTimeAgo, cn, getFileURL } from "@plane/utils";
+import { calculateTimeAgo, cn, getDateFnsLocaleForLanguage, getFileURL } from "@plane/utils";
 // components
 import { RichTextEditor } from "@/components/editor/rich-text";
 // hooks
@@ -61,7 +61,7 @@ export const DescriptionVersionsModal = observer(function DescriptionVersionsMod
   const workspaceId = getWorkspaceBySlug(workspaceSlug)?.id;
   const versionCreator = activeVersionDetails?.owned_by ? getUserDetails(activeVersionDetails.owned_by) : null;
   // translation
-  const { t } = useTranslation();
+  const { t, currentLocale } = useTranslation();
 
   const handleCopyMarkdown = useCallback(() => {
     if (!editorRef.current) return;
@@ -92,7 +92,7 @@ export const DescriptionVersionsModal = observer(function DescriptionVersionsMod
               </span>
             </p>
             <p className="flex-shrink-0 text-secondary">
-              {calculateTimeAgo(activeVersionDetails?.last_saved_at ?? "")}
+              {calculateTimeAgo(activeVersionDetails?.last_saved_at ?? "", getDateFnsLocaleForLanguage(currentLocale))}
             </p>
           </div>
           <div className="flex flex-shrink-0 items-center">

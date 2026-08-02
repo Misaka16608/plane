@@ -7,11 +7,12 @@
 import type { FC, ReactNode } from "react";
 import { Network } from "lucide-react";
 // types
+import { useTranslation } from "@plane/i18n";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { TWorkspaceBaseActivity } from "@plane/types";
 // ui
 // helpers
-import { renderFormattedTime, renderFormattedDate, calculateTimeAgo } from "@plane/utils";
+import { renderFormattedTime, renderFormattedDate, calculateTimeAgo, getDateFnsLocaleForLanguage } from "@plane/utils";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // local components
@@ -29,6 +30,7 @@ export function ActivityBlockComponent(props: TActivityBlockComponent) {
   const { icon: Icon, activity, ends, children, customUserName } = props;
   // hooks
   const { isMobile } = usePlatformOS();
+  const { currentLocale } = useTranslation();
 
   if (!activity) return <></>;
   return (
@@ -50,7 +52,7 @@ export function ActivityBlockComponent(props: TActivityBlockComponent) {
             tooltipContent={`${renderFormattedDate(activity.created_at)}, ${renderFormattedTime(activity.created_at)}`}
           >
             <span className="cursor-help font-medium whitespace-nowrap text-tertiary">
-              {calculateTimeAgo(activity.created_at)}
+              {calculateTimeAgo(activity.created_at, getDateFnsLocaleForLanguage(currentLocale))}
             </span>
           </Tooltip>
         </div>

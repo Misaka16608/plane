@@ -7,6 +7,7 @@
 import { observer } from "mobx-react";
 // types
 import type { TIssueRelationTypes } from "@plane/types";
+import { useTranslation } from "@plane/i18n";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
@@ -14,6 +15,7 @@ import { useTimeLineRelationOptions } from "@/components/relations";
 // local helpers
 import { IssueActivityBlockComponent } from "./";
 import { getRelationActivityContent } from "./helpers/activity";
+import { interpolateNodes } from "./helpers/i18n";
 
 type TIssueRelationActivity = { activityId: string; ends: "top" | "bottom" | undefined };
 
@@ -23,6 +25,7 @@ export const IssueRelationActivity = observer(function IssueRelationActivity(pro
   const {
     activity: { getActivityById },
   } = useIssueDetail();
+  const { t } = useTranslation();
 
   const activity = getActivityById(activityId);
   const ISSUE_RELATION_OPTIONS = useTimeLineRelationOptions();
@@ -35,12 +38,14 @@ export const IssueRelationActivity = observer(function IssueRelationActivity(pro
       activityId={activityId}
       ends={ends}
     >
-      {activityContent}
-      {activity.old_value === "" ? (
-        <span className="font-medium text-primary">{activity.new_value}.</span>
-      ) : (
-        <span className="font-medium text-primary">{activity.old_value}.</span>
-      )}
+      {activityContent &&
+        interpolateNodes(t, activityContent, {
+          value: (
+            <span className="font-medium text-primary">
+              {activity.old_value === "" ? activity.new_value : activity.old_value}
+            </span>
+          ),
+        })}
     </IssueActivityBlockComponent>
   );
 });
