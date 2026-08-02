@@ -280,6 +280,19 @@ class ProjectMemberViewSet(BaseViewSet):
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
+        # Code paths are personal: each member may only configure their own,
+        # unless the requester is a project/workspace admin.
+        if "frontend_path" in request.data or "backend_path" in request.data:
+            if (
+                request.user.id != project_member.member_id
+                and requested_project_member.role < ROLE.ADMIN.value
+                and not is_workspace_admin
+            ):
+                return Response(
+                    {"error": "You can only update your own code paths"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
         serializer = ProjectMemberSerializer(project_member, data=request.data, partial=True)
 
         if serializer.is_valid():

@@ -101,6 +101,22 @@ class IssueManager(SoftDeletionManager):
         )
 
 
+class WorkflowStage(models.TextChoices):
+    """Pipeline position of an issue in the Codex workflow.
+
+    The fine-grained "pending/in progress" states (待评估/评估中 etc.) are
+    represented by Plane custom states in a later phase; this field tracks the
+    pipeline position used by the workflow transition endpoints.
+    """
+
+    EVALUATION = "evaluation", "评估中"
+    SPLITTING = "splitting", "拆分中"
+    EXECUTION = "execution", "执行中"
+    REVIEW = "review", "验收中"
+    RETURNED = "returned", "退回中"
+    COMPLETED = "completed", "已完成"
+
+
 class Issue(ChangeTrackerMixin, ProjectBaseModel):
     TRACKED_FIELDS = ["state_id"]
 
@@ -168,6 +184,49 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
         null=True,
         blank=True,
     )
+    workflow_stage = models.CharField(
+        max_length=32,
+        choices=WorkflowStage.choices,
+        default=WorkflowStage.EVALUATION,
+    )
+    workflow_evaluator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="workflow_evaluator_issues",
+    )
+    workflow_splitter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="workflow_splitter_issues",
+    )
+    workflow_executor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="workflow_executor_issues",
+    )
+    workflow_reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="workflow_reviewer_issues",
+    )
+    workflow_current_handler = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="workflow_handler_issues",
+    )
+    workflow_returned_to = models.CharField(max_length=32, null=True, blank=True)
+    workflow_returned_from = models.CharField(max_length=32, null=True, blank=True)
+    workflow_history = models.JSONField(default=list, blank=True)
 
     issue_objects = IssueManager()
 

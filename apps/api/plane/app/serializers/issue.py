@@ -809,6 +809,15 @@ class IssueSerializer(DynamicBaseSerializer):
             "link_count",
             "is_draft",
             "archived_at",
+            "workflow_stage",
+            "workflow_evaluator",
+            "workflow_splitter",
+            "workflow_executor",
+            "workflow_reviewer",
+            "workflow_current_handler",
+            "workflow_returned_to",
+            "workflow_returned_from",
+            "workflow_history",
         ]
         read_only_fields = fields
 
@@ -867,6 +876,15 @@ class IssueListDetailSerializer(serializers.Serializer):
             "sub_issues_count": instance.sub_issues_count,
             "attachment_count": instance.attachment_count,
             "link_count": instance.link_count,
+            "workflow_stage": instance.workflow_stage,
+            "workflow_evaluator": instance.workflow_evaluator_id,
+            "workflow_splitter": instance.workflow_splitter_id,
+            "workflow_executor": instance.workflow_executor_id,
+            "workflow_reviewer": instance.workflow_reviewer_id,
+            "workflow_current_handler": instance.workflow_current_handler_id,
+            "workflow_returned_to": instance.workflow_returned_to,
+            "workflow_returned_from": instance.workflow_returned_from,
+            "workflow_history": instance.workflow_history,
         }
 
         # Handle expanded fields only when requested - using direct field access

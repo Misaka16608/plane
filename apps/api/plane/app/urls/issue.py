@@ -31,6 +31,7 @@ from plane.app.views import (
     WorkItemDescriptionVersionEndpoint,
     IssueMetaEndpoint,
     IssueDetailIdentifierEndpoint,
+    IssueWorkflowViewSet,
 )
 
 urlpatterns = [
@@ -277,6 +278,26 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/meta/",
         IssueMetaEndpoint.as_view(),
         name="issue-meta",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/workflow/assign/",
+        IssueWorkflowViewSet.as_view({"post": "assign"}),
+        name="issue-workflow-assign",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/workflow/advance/",
+        IssueWorkflowViewSet.as_view({"post": "advance"}),
+        name="issue-workflow-advance",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/workflow/return/",
+        IssueWorkflowViewSet.as_view({"post": "return_task"}),
+        name="issue-workflow-return",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/workflow/escalate/",
+        IssueWorkflowViewSet.as_view({"post": "escalate"}),
+        name="issue-workflow-escalate",
     ),
     path(
         "workspaces/<str:slug>/work-items/<str:project_identifier>-<str:issue_identifier>/",
