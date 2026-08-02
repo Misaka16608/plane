@@ -15,6 +15,7 @@ import { SearchIcon, IntakeStateGroupIcon, ChevronDownIcon } from "@plane/propel
 import type { IIntakeState } from "@plane/types";
 import { ComboDropDown, Spinner } from "@plane/ui";
 import { cn } from "@plane/utils";
+import { getLocalizedStateName } from "@/components/issues/issue-layouts/utils";
 // components
 import { DropdownButton } from "@/components/dropdowns/buttons";
 import { BUTTON_VARIANTS_WITH_TEXT } from "@/components/dropdowns/constants";
@@ -120,7 +121,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
           color={state?.color}
           className={cn("flex-shrink-0", iconSize)}
         />
-        <span className="flex-grow truncate text-left">{state?.name}</span>
+        <span className="flex-grow truncate text-left">{getLocalizedStateName(state?.name, t)}</span>
       </div>
     ),
   }));

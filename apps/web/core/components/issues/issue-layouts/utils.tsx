@@ -76,18 +76,21 @@ import {
 // Default state names (seeded in the DB) mapped to i18n keys so kanban/list
 // group headers and state dropdowns render localized names.
 const DEFAULT_STATE_NAME_KEYS: Record<string, string> = {
-  Backlog: "issue_activity.state.backlog",
-  Todo: "issue_activity.state.todo",
-  "In Progress": "issue_activity.state.in_progress",
-  Done: "issue_activity.state.done",
-  Cancelled: "issue_activity.state.cancelled",
-  Triage: "issue_activity.state.triage",
+  Backlog: "issue_activity.state_name.backlog",
+  Todo: "issue_activity.state_name.todo",
+  "In Progress": "issue_activity.state_name.in_progress",
+  Done: "issue_activity.state_name.done",
+  Cancelled: "issue_activity.state_name.cancelled",
+  Triage: "issue_activity.state_name.triage",
 };
 
 export const getLocalizedStateName = (name: string | null | undefined, t: (key: string) => string): string => {
   if (!name) return "";
   const key = DEFAULT_STATE_NAME_KEYS[name];
-  return key ? t(key) : name;
+  if (!key) return name;
+  const translated = t(key);
+  // Fall back to the original name if the translation is missing (t returns the key).
+  return translated === key ? name : translated;
 };
 
 export const HIGHLIGHT_CLASS = "highlight";

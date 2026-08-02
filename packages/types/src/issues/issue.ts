@@ -101,6 +101,16 @@ export type TIssue = TBaseIssue & {
   // sourceIssueId is used to store the original issue id when creating a copy of an issue. Used in cloning property values. It is not a part of the API response.
   sourceIssueId?: string;
   state__group?: TStateGroups | null;
+  // Codex workflow fields (see apps/api workflow endpoints)
+  workflow_stage?: string;
+  workflow_evaluator?: string | null;
+  workflow_splitter?: string | null;
+  workflow_executor?: string | null;
+  workflow_reviewer?: string | null;
+  workflow_current_handler?: string | null;
+  workflow_returned_to?: string | null;
+  workflow_returned_from?: string | null;
+  workflow_history?: Array<Record<string, unknown>>;
 };
 
 export type TIssueMap = {

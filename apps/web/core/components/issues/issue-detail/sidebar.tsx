@@ -41,6 +41,7 @@ import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/prop
 import { IssueCycleSelect } from "./cycle-select";
 import { IssueLabel } from "./label";
 import { IssueModuleSelect } from "./module-select";
+import { IssueWorkflowPanel } from "./workflow/workflow-panel";
 import type { TIssueOperations } from "./root";
 
 type Props = {
@@ -249,6 +250,12 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
               />
             </SidebarPropertyListItem>
           </div>
+          <IssueWorkflowPanel
+            workspaceSlug={workspaceSlug}
+            projectId={projectId}
+            issueId={issueId}
+            isEditable={isEditable}
+          />
         </div>
       </div>
     </>

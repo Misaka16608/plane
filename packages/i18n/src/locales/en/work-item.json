@@ -434,7 +434,7 @@
     "added": "Added",
     "by": "by",
     "bot": "Bot",
-    "state": {
+    "state_name": {
       "backlog": "Backlog",
       "todo": "Todo",
       "in_progress": "In Progress",
@@ -589,5 +589,33 @@
     "add_existing": "Add an existing work item",
     "added_to_cycle_success": "Work items added to the cycle successfully.",
     "added_to_cycle_error": "Selected work items could not be added to the cycle. Please try again."
+  },
+  "issue_workflow": {
+    "panel_title": "Workflow",
+    "current_handler": "Current handler",
+    "evaluator": "Evaluator",
+    "splitter": "Splitter",
+    "executor": "Executor",
+    "reviewer": "Reviewer",
+    "not_assigned": "Not assigned",
+    "stage": {
+      "evaluation": "Evaluation",
+      "splitting": "Splitting",
+      "execution": "Execution",
+      "review": "Review",
+      "returned": "Returned",
+      "completed": "Completed"
+    },
+    "advance": "Advance",
+    "return": "Return",
+    "escalate": "Escalate",
+    "return_title": "Return work item",
+    "escalate_title": "Escalate work item",
+    "note_placeholder": "Describe the blocker or reason…",
+    "return_target": "Return to",
+    "target_executor": "Executor",
+    "target_splitter": "Splitter",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   }
 }

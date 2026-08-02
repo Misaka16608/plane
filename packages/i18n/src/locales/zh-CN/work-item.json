@@ -434,7 +434,7 @@
     "added": "添加于",
     "by": "由",
     "bot": "机器人",
-    "state": {
+    "state_name": {
       "backlog": "积压",
       "todo": "待处理",
       "in_progress": "进行中",
@@ -589,5 +589,33 @@
     "add_existing": "添加已有工作项",
     "added_to_cycle_success": "工作项已成功添加到周期。",
     "added_to_cycle_error": "无法将所选工作项添加到周期，请重试。"
+  },
+  "issue_workflow": {
+    "panel_title": "工作流",
+    "current_handler": "当前处理人",
+    "evaluator": "评估者",
+    "splitter": "拆分者",
+    "executor": "执行者",
+    "reviewer": "验收者",
+    "not_assigned": "未指派",
+    "stage": {
+      "evaluation": "评估中",
+      "splitting": "拆分中",
+      "execution": "执行中",
+      "review": "验收中",
+      "returned": "退回中",
+      "completed": "已完成"
+    },
+    "advance": "推进",
+    "return": "退回",
+    "escalate": "上抛",
+    "return_title": "退回工作项",
+    "escalate_title": "上抛工作项",
+    "note_placeholder": "描述遇到的问题或原因…",
+    "return_target": "退回给",
+    "target_executor": "执行者",
+    "target_splitter": "拆分者",
+    "confirm": "确认",
+    "cancel": "取消"
   }
 }

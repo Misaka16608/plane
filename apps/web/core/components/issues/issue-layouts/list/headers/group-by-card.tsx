@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { CircleDashed } from "lucide-react";
 import { PlusIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 // types
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TIssue, ISearchIssueResponse, TIssueGroupByOptions } from "@plane/types";
@@ -20,6 +21,7 @@ import { ExistingIssuesListModal } from "@/components/core/modals/existing-issue
 import { MultipleSelectGroupAction } from "@/components/core/multiple-select";
 import { CreateUpdateIssueModal } from "@/components/issues/issue-modal/modal";
 import { CreateUpdateEpicModal } from "@/components/epic-modal";
+import { getLocalizedStateName } from "@/components/issues/issue-layouts/utils";
 // constants
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import type { TSelectionHelper } from "@/hooks/use-multiple-select";
@@ -40,6 +42,7 @@ interface IHeaderGroupByCard {
 }
 
 export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHeaderGroupByCard) {
+  const { t } = useTranslation();
   const {
     groupID,
     icon,
@@ -76,14 +79,14 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
 
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Success!",
-        message: "Work items added to the cycle successfully.",
+        title: t("common.success"),
+        message: t("work_item.added_to_cycle_success"),
       });
     } catch (_error) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error!",
-        message: "Selected work items could not be added to the cycle. Please try again.",
+        title: t("common.error.label"),
+        message: t("work_item.added_to_cycle_error"),
       });
     }
   };
@@ -115,7 +118,9 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
           className="relative flex w-full cursor-pointer flex-row items-center gap-1 overflow-hidden"
           onClick={() => handleCollapsedGroups(groupID)}
         >
-          <div className="line-clamp-1 inline-block truncate font-medium text-primary">{title}</div>
+          <div className="line-clamp-1 inline-block truncate font-medium text-primary">
+            {getLocalizedStateName(title, t)}
+          </div>
           <div className="pl-2 text-13 font-medium text-tertiary">{count || 0}</div>
           <div className="px-2.5"></div>
         </div>
@@ -134,14 +139,14 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
                   setIsOpen(true);
                 }}
               >
-                <span className="flex items-center justify-start gap-2">Create work item</span>
+                <span className="flex items-center justify-start gap-2">{t("work_item.create")}</span>
               </CustomMenu.MenuItem>
               <CustomMenu.MenuItem
                 onClick={() => {
                   setOpenExistingIssueListModal(true);
                 }}
               >
-                <span className="flex items-center justify-start gap-2">Add an existing work item</span>
+                <span className="flex items-center justify-start gap-2">{t("work_item.add_existing")}</span>
               </CustomMenu.MenuItem>
             </CustomMenu>
           ) : (
