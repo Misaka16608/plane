@@ -325,6 +325,7 @@
   "make_a_copy": "Make a copy",
   "move_to_project": "Move to project",
   "good": "Good",
+  "greeting": "Good {timePeriod}, {name}",
   "morning": "morning",
   "afternoon": "afternoon",
   "evening": "evening",

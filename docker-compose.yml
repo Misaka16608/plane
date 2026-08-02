@@ -7,6 +7,9 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     restart: always
+    # Live locale files so translations can be edited without rebuilding the image
+    volumes:
+      - ./packages/i18n/src/locales:/usr/share/nginx/html/locales:ro
     depends_on:
       - api
 
@@ -104,6 +107,10 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     restart: always
+    environment:
+      API_BASE_URL: ${LIVE_API_BASE_URL:-http://api:8000}
+      LIVE_SERVER_SECRET_KEY: ${LIVE_SERVER_SECRET_KEY:-secret-key}
+      REDIS_URL: ${REDIS_URL:-redis://plane-redis:6379/}
 
   plane-db:
     container_name: plane-db
@@ -164,6 +171,11 @@ services:
     environment:
       FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
       BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+      CERT_EMAIL: ${CERT_EMAIL:-}
+      CERT_ACME_CA: ${CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+      CERT_ACME_DNS: ${CERT_ACME_DNS:-}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-0.0.0.0/0}
     depends_on:
       - web
       - api

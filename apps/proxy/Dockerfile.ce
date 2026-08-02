@@ -1,5 +1,8 @@
 FROM caddy:2.11.3-builder-alpine AS caddy-builder
 
+# Skip checksum database lookups (sum.golang.org is unreachable from CN networks)
+ENV GOSUMDB=off
+
 RUN xcaddy build \
         --with github.com/caddy-dns/cloudflare@v0.2.1 \
         --with github.com/caddy-dns/digitalocean@04bde2867106aa1b44c2f9da41a285fa02e629c5 \

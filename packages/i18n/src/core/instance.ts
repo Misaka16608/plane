@@ -18,7 +18,20 @@ export const i18nInstance: I18nInstance = i18n.createInstance();
 i18nInstance
   .use(ICU)
   .use(initReactI18next)
-  .use(resourcesToBackend((language: string, namespace: string) => import(`../locales/${language}/${namespace}.json`)));
+  // Load locale JSON files at runtime from the static resources served by nginx
+  // (mounted at /usr/share/nginx/html/locales). This keeps translations as
+  // separate editable files instead of baking them into the app bundle.
+  .use(
+    resourcesToBackend((language: string, namespace: string, callback) => {
+      fetch(`/locales/${language}/${namespace}.json`)
+        .then((response) => {
+          if (!response.ok) throw new Error(`Failed to load locale ${language}/${namespace}: HTTP ${response.status}`);
+          return response.json();
+        })
+        .then((data) => callback(null, data))
+        .catch((error) => callback(error));
+    })
+  );
 
 const initialLng =
   typeof window !== "undefined" ? localStorage.getItem(LANGUAGE_STORAGE_KEY) || FALLBACK_LANGUAGE : FALLBACK_LANGUAGE;

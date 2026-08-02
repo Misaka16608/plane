@@ -325,6 +325,7 @@
   "make_a_copy": "创建副本",
   "move_to_project": "移动到项目",
   "good": "早上",
+  "greeting": "早上好，{name}",
   "morning": "早上",
   "afternoon": "下午",
   "evening": "晚上",
