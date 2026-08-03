@@ -13,8 +13,20 @@ export function loadContext(id) {
   try {
     return JSON.parse(fs.readFileSync(ctxFile(id), "utf8"));
   } catch {
-    return { id, stages: {} };
+    return newContext(id);
   }
+}
+
+export function newContext(id, extra = {}) {
+  return {
+    id,
+    depth: extra.depth || 0,
+    parentId: extra.parentId || null,
+    parentSplitSession: extra.parentSplitSession || null,
+    sessions: { eval: null, exec: null, verify: null },
+    rejectCount: extra.rejectCount || 0,
+    stages: {},
+  };
 }
 
 export function saveContext(ctx) {
@@ -51,6 +63,8 @@ export function stageSummary(stage, v) {
       return `拆分结论：${v.needs_split ? `需要拆分（${v.subtasks?.length || 0} 个子任务）：${v.reason || ""}` : `无需拆分（${v.reason || ""}）`}`;
     case "exec":
       return `执行结论：${v.status}——${v.summary || ""}（分支 ${v.branch || "-"}）`;
+    case "verify":
+      return `验收结论：${v.verdict}——${v.summary || ""}${v.issues?.length ? `（问题：${v.issues.join("；")}）` : ""}`;
     default:
       return "";
   }

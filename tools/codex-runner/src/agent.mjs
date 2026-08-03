@@ -10,7 +10,6 @@ let codexBin = null;
 
 function resolveCodexBin() {
   if (codexBin) return codexBin;
-  // 1) 从 PATH 中的 codex shim（codex.cmd/codex.ps1）所在目录推导真实 js 入口
   const pathDirs = (process.env.PATH || "").split(";");
   for (const dir of pathDirs) {
     if (!dir) continue;
@@ -23,7 +22,6 @@ function resolveCodexBin() {
       }
     }
   }
-  // 2) 回退：npm 全局前缀
   try {
     const prefix = execSync("npm prefix -g", { encoding: "utf8" }).trim();
     const candidate = path.join(prefix, "node_modules", "@openai", "codex", "bin", "codex.js");
@@ -34,17 +32,52 @@ function resolveCodexBin() {
   return codexBin;
 }
 
-export async function runCodex({ cwd, sandbox = "read-only", prompt, timeoutMs = cfg.codexTimeoutMs, label = "agent" }) {
+function parseEvents(stdout) {
+  let threadId = "";
+  let lastMessage = "";
+  let hasError = false;
+  for (const line of stdout.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    let e;
+    try {
+      e = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (e.type === "thread.started" && e.thread_id) threadId = e.thread_id;
+    if (e.type === "error") hasError = true;
+    if (e.type === "item.completed" && e.item?.type === "agent_message" && e.item?.text) {
+      lastMessage = e.item.text;
+    }
+  }
+  return { threadId, lastMessage: lastMessage.trim(), hasError };
+}
+
+/**
+ * 运行 codex agent。
+ * mode=create：新开会话（-s 指定沙箱）；mode=resume：续接会话（-c sandbox_mode 覆盖沙箱，显式 thread_id）。
+ * cwd 始终由 spawn 控制（resume 跟随进程 cwd）。
+ */
+export async function runCodex({
+  mode = "create",
+  threadId = "",
+  cwd,
+  sandbox = "read-only",
+  prompt,
+  timeoutMs = cfg.codexTimeoutMs,
+  label = "agent",
+}) {
   if (cfg.dryRun) {
-    log(`[${label}] [dry-run] skip codex exec`);
     const canned = {
       eval: '{"verdict":"PASS","summary":"（演练）需求明确，评估通过"}',
       split: '{"needs_split":false,"reason":"（演练）任务无需拆分"}',
-      exec: '{"status":"DONE","summary":"（演练）执行完成，已提交本地分支"}',
+      exec: '{"status":"DONE","summary":"（演练）执行完成，已提交本地分支","verification":"（演练）运行应用验证音量入口"}',
+      verify: '{"verdict":"PASS","issues":[],"summary":"（演练）黑盒验收通过"}',
     };
-    return { ok: true, dryRun: true, lastMessage: canned[label] || "", error: null };
+    log(`[${label}] [dry-run] skip codex exec${mode === "resume" ? " (resume)" : ""}`);
+    return { ok: true, dryRun: true, threadId: "", lastMessage: canned[label] || "", error: null };
   }
-  // 落盘实际发送的 prompt，便于核查上下文是否完整
+
   try {
     const promptDir = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), "logs");
     fs.mkdirSync(promptDir, { recursive: true });
@@ -52,54 +85,51 @@ export async function runCodex({ cwd, sandbox = "read-only", prompt, timeoutMs =
   } catch {
     /* ignore */
   }
-  const outFile = path.join(
-    os.tmpdir(),
-    `codex-runner-${Date.now()}-${Math.random().toString(36).slice(2)}.md`
-  );
-  const args = ["exec", "-C", cwd, "-s", sandbox, "-o", outFile, "-"];
+
+  const args =
+    mode === "resume"
+      ? ["exec", "resume", threadId, "--skip-git-repo-check", "-c", `sandbox_mode="${sandbox}"`, "--json", "-"]
+      : ["exec", "-C", cwd, "-s", sandbox, "--json", "-"];
+
   const bin = resolveCodexBin();
   const cmd = bin ? process.execPath : "codex";
   const spawnArgs = bin ? [bin, ...args] : args;
+
   return await new Promise((resolve) => {
-    log(`[${label}] codex exec start (cwd=${cwd}, sandbox=${sandbox})`);
+    log(`[${label}] codex ${mode} start (cwd=${cwd}, sandbox=${sandbox}${threadId ? `, resume=${threadId}` : ""})`);
+    let child;
     const timer = setTimeout(() => {
       log(`[${label}] timeout after ${timeoutMs}ms, killing`);
-      child.kill();
+      if (child) child.kill();
     }, timeoutMs);
-    let child;
     try {
       child = spawn(cmd, spawnArgs, { stdio: ["pipe", "pipe", "pipe"], cwd });
     } catch (err) {
       clearTimeout(timer);
       log(`[${label}] spawn error: ${err.message}`);
-      resolve({ ok: false, error: err.message, lastMessage: "" });
+      resolve({ ok: false, error: err.message, threadId: "", lastMessage: "" });
       return;
     }
+    let stdout = "";
     let stderr = "";
+    child.stdout.on("data", (d) => {
+      stdout += d.toString();
+    });
     child.stderr.on("data", (d) => {
       stderr += d.toString();
     });
     child.on("error", (err) => {
       clearTimeout(timer);
       log(`[${label}] spawn error: ${err.message}`);
-      resolve({ ok: false, error: err.message, lastMessage: "" });
+      resolve({ ok: false, error: err.message, threadId: "", lastMessage: "" });
     });
     child.on("close", (code) => {
       clearTimeout(timer);
-      let lastMessage = "";
-      try {
-        lastMessage = fs.readFileSync(outFile, "utf8");
-      } catch {
-        /* no output file */
-      }
-      try {
-        fs.unlinkSync(outFile);
-      } catch {
-        /* ignore */
-      }
-      log(`[${label}] codex exec exit=${code}`);
+      const { threadId: gotThread, lastMessage, hasError } = parseEvents(stdout);
+      const ok = code === 0 && !hasError;
+      log(`[${label}] codex exit=${code} thread=${gotThread || "-"} ok=${ok}`);
       if (stderr) log(`[${label}] stderr: ${stderr.slice(0, 500)}`);
-      resolve({ ok: code === 0, exitCode: code, lastMessage: lastMessage.trim(), error: null, stderr: stderr.slice(0, 1000) });
+      resolve({ ok, exitCode: code, threadId: gotThread, lastMessage, error: ok ? null : stderr.slice(0, 1000) });
     });
     child.stdin.end(prompt);
   });
@@ -123,16 +153,4 @@ export function extractJson(text) {
   } catch {
     return null;
   }
-}
-
-export async function branchExists({ cwd, branch }) {
-  return await new Promise((resolve) => {
-    const child = spawn("git", ["branch", "--list", branch], { stdio: ["ignore", "pipe", "ignore"], cwd });
-    let out = "";
-    child.stdout.on("data", (d) => {
-      out += d.toString();
-    });
-    child.on("close", (code) => resolve(code === 0 && out.trim().length > 0));
-    child.on("error", () => resolve(false));
-  });
 }
