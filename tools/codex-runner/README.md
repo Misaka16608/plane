@@ -25,6 +25,14 @@ node src/runner.mjs --task <issue-id>  # 处理指定任务后退出
 
 任务描述须写明目标仓库，格式：`仓库：WeatherPetUnity`（未写时用 `CODEX_DEFAULT_REPO`）。
 
+## 单子绑定上下文（ticket-bound context）
+
+- 每个单子有一条绑定的上下文记录：`contexts/<issue-id>.json`（gitignored），随流程累积；
+- 每环节结束后，runner 把该环节的结构化结论写入记录（评估 verdict/summary、拆分方案/subtasks、执行 summary/分支/commit）；
+- 每个角色处理时，prompt 由"单子基础信息（单子/仓库/需求/验收标准/描述全文）+ 前面环节结论 + 父单子信息 + 评论历史 + 角色指令"构成——上下文绑定在单子上，不依赖会话记忆；
+- 每次 `codex exec` 仍是全新会话，但开场 prompt 携带该单子的完整快照；
+- 调试：实际发送的 prompt 会落盘到 `logs/prompt-<时间戳>-<环节>.txt`。
+
 ## 护栏
 
 - 执行只改指定仓库、自动 commit 到本地分支 `codex/<标识>`，不 push；

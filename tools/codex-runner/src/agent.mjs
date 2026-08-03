@@ -2,6 +2,7 @@ import { spawn, execSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cfg from "./config.mjs";
 import { log } from "./log.mjs";
 
@@ -42,6 +43,14 @@ export async function runCodex({ cwd, sandbox = "read-only", prompt, timeoutMs =
       exec: '{"status":"DONE","summary":"（演练）执行完成，已提交本地分支"}',
     };
     return { ok: true, dryRun: true, lastMessage: canned[label] || "", error: null };
+  }
+  // 落盘实际发送的 prompt，便于核查上下文是否完整
+  try {
+    const promptDir = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), "logs");
+    fs.mkdirSync(promptDir, { recursive: true });
+    fs.writeFileSync(path.join(promptDir, `prompt-${Date.now()}-${label}.txt`), prompt, "utf8");
+  } catch {
+    /* ignore */
   }
   const outFile = path.join(
     os.tmpdir(),

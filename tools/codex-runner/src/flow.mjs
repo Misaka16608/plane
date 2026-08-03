@@ -3,6 +3,7 @@ import { log } from "./log.mjs";
 import * as plane from "./plane.mjs";
 import { runCodex, extractJson, branchExists } from "./agent.mjs";
 import { isInFlight, setInFlight, clearInFlight, recentlyProcessed, markProcessed } from "./state.mjs";
+import { loadContext, saveContext, parseDescription, stageSummary } from "./ticket-context.mjs";
 
 let states = {};
 
@@ -34,9 +35,58 @@ function escapeHtml(s) {
 }
 
 function parseRepo(issue) {
-  const text = stripHtml(issue.description_html);
-  const m = text.match(/仓库\s*[：:]\s*([^\s，。;；]+)/);
-  return m ? m[1] : cfg.defaultRepo || "";
+  return parseDescription(issue.description_html).repo || cfg.defaultRepo || "";
+}
+
+const ROLE_NAMES = { eval: "评估者", split: "拆分者", exec: "执行者" };
+
+function buildBase(issue, parsed) {
+  const lines = [
+    `【单子】${issue.name}`,
+    parsed.repo ? `【仓库】${parsed.repo}` : "",
+    parsed.requirement ? `【需求】${parsed.requirement}` : "",
+    parsed.acceptance ? `【验收标准】${parsed.acceptance}` : "",
+  ];
+  if (parsed.text) lines.push(`【描述全文】${parsed.text}`);
+  return lines.filter(Boolean).join("\n");
+}
+
+async function parentInfo(issue) {
+  if (!issue.parent_id) return "";
+  const p = await plane.getIssue(issue.parent_id).catch(() => null);
+  if (!p) return "";
+  const pd = parseDescription(p.description_html);
+  return [
+    `【父单子】${p.name}`,
+    pd.requirement ? `父单需求：${pd.requirement}` : "",
+    pd.acceptance ? `父单验收标准：${pd.acceptance}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function priorStagesText(ctx) {
+  const parts = [];
+  for (const stage of ["eval", "split", "exec"]) {
+    if (ctx.stages?.[stage]) parts.push(stageSummary(stage, ctx.stages[stage]));
+  }
+  return parts.length ? parts.join("\n") : "（无）";
+}
+
+async function buildTicketPrompt(issue, role, instructions) {
+  const ctx = loadContext(issue.id);
+  const parsed = parseDescription(issue.description_html);
+  const parts = [
+    `你是流程中的"${ROLE_NAMES[role]}"（${role}）。`,
+    "",
+    buildBase(issue, parsed),
+    "",
+    `【前面环节结论】\n${priorStagesText(ctx)}`,
+  ];
+  const parent = await parentInfo(issue);
+  if (parent) parts.push("", parent);
+  parts.push("", `【评论历史】\n${await commentText(issue)}`, "", instructions);
+  return parts.join("\n");
 }
 
 function rollbackState(stage) {
@@ -57,13 +107,9 @@ async function commentText(issue) {
   const cs = await plane.getComments(issue.id, cfg.roles.exec.token).catch(() => []);
   if (!cs.length) return "（无）";
   return cs
-    .slice(-10)
+    .slice(-50)
     .map((c) => `${c.actor_detail?.display_name || c.actor || "?"}: ${stripHtml(c.comment_html)}`)
     .join("\n");
-}
-
-function buildPrompt(issue, body) {
-  return `你是 Plane 任务流程中的 Codex 自动化执行器（角色账号）。请严格按指令执行，只做任务要求的事。\n\n${body}`;
 }
 
 async function handleEval(issue) {
@@ -71,13 +117,13 @@ async function handleEval(issue) {
   await plane.addComment(issue.id, "自动化：评估开始（codex_eval）。", token);
   await plane.updateIssue(issue.id, { state: states["评估中"] }, token);
   const repo = parseRepo(issue);
-  const prompt = buildPrompt(
-    issue,
-    `你是流程中的"评估者"（codex_eval）。\n任务：${issue.name}\n描述：${stripHtml(issue.description_html)}\n评论历史：\n${await commentText(issue)}\n目标代码仓库：${repo || "（未指定，将用默认）"}\n\n请评估需求是否明确、范围是否清晰、能否进入拆分。只做分析，不要修改任何文件。\n最后输出 JSON（不要有其他文字）：{"verdict":"PASS 或 NEED_INFO","summary":"评估结论"}`
-  );
+  const prompt = await buildTicketPrompt(issue, "eval", `请评估需求是否明确、范围是否清晰、能否进入拆分。只做分析，不要修改任何文件。\n在 summary 中先一句话复述任务要点，再给出评估结论。\n最后输出 JSON（不要有其他文字）：{"verdict":"PASS 或 NEED_INFO","summary":"复述要点 + 评估结论"}`);
   const res = await runCodex({ cwd: resolveRepo(repo) || process.cwd(), sandbox: "read-only", prompt, label: "eval" });
   const j = extractJson(res.lastMessage);
   const summary = j?.summary || (res.dryRun ? "（演练）评估通过" : res.lastMessage.slice(0, 500) || "无结论");
+  const ctx = loadContext(issue.id);
+  ctx.stages.eval = { verdict: j?.verdict || "NEED_INFO", summary, at: new Date().toISOString() };
+  saveContext(ctx);
   if (res.ok && j?.verdict === "PASS") {
     await plane.addComment(issue.id, `评估通过：${escapeHtml(summary)}`, token);
     await plane.updateIssue(issue.id, { state: states["待拆分"], assignee_ids: [cfg.roles.split.userId] }, token);
@@ -94,12 +140,17 @@ async function handleSplit(issue) {
   await plane.addComment(issue.id, "自动化：拆分判断开始（codex_split）。", token);
   await plane.updateIssue(issue.id, { state: states["拆分中"] }, token);
   const repo = parseRepo(issue);
-  const prompt = buildPrompt(
-    issue,
-    `你是流程中的"拆分者"（codex_split）。\n任务：${issue.name}\n描述：${stripHtml(issue.description_html)}\n评论历史：\n${await commentText(issue)}\n目标代码仓库：${repo || "（未指定）"}\n\n请判断任务是否需要拆分为多个子任务。只做分析，不要修改任何文件。\n最后输出 JSON（不要有其他文字）：\n{"needs_split":true或false,"reason":"判断理由","subtasks":[{"name":"子任务名","description":"子任务需求说明"}]}\n不需要拆分时 subtasks 为空数组。`
-  );
+  const prompt = await buildTicketPrompt(issue, "split", `请判断任务是否需要拆分为多个子任务。只做分析，不要修改任何文件。\n若需要拆分，每个子任务的 description 必须包含 仓库、需求、验收标准 字段（供后续环节解析）。\n最后输出 JSON（不要有其他文字）：\n{"needs_split":true或false,"reason":"判断理由","subtasks":[{"name":"子任务名","description":"仓库：xxx\n需求：xxx\n验收标准：xxx"}]}\n不需要拆分时 subtasks 为空数组。`);
   const res = await runCodex({ cwd: resolveRepo(repo) || process.cwd(), sandbox: "read-only", prompt, label: "split" });
   const j = extractJson(res.lastMessage);
+  const ctx = loadContext(issue.id);
+  ctx.stages.split = {
+    needs_split: !!j?.needs_split,
+    reason: j?.reason || "",
+    subtasks: Array.isArray(j?.subtasks) ? j.subtasks : [],
+    at: new Date().toISOString(),
+  };
+  saveContext(ctx);
   if (res.ok && j && j.needs_split === false) {
     await plane.addComment(issue.id, `无需拆分：${escapeHtml(j.reason || "直接走父任务")}`, token);
     await plane.updateIssue(issue.id, { state: states["待执行"], assignee_ids: [cfg.roles.exec.userId] }, token);
@@ -161,13 +212,20 @@ async function handleExec(issue) {
     return;
   }
   const branch = `codex/${issue.sequence_id || issue.id.slice(0, 8)}`;
-  const prompt = buildPrompt(
-    issue,
-    `你是流程中的"执行者"（codex_exec）。\n任务：${issue.name}\n描述：${stripHtml(issue.description_html)}\n评论历史：\n${await commentText(issue)}\n工作仓库：${repoPath}\n\n请：1) 按任务需求修改代码；2) 自检（按仓库约定，如 tsc/lint/build）；3) 把改动提交到本地分支 ${branch}（git checkout -b ${branch}，再 git add/commit，**不要 push**，不要提交无关改动）。\n最后输出 JSON（不要有其他文字）：{"status":"DONE 或 BLOCKED","summary":"改动说明","files_changed":["文件列表"],"commit":"提交哈希或略"}`
-  );
+  const prompt = await buildTicketPrompt(issue, "exec", `请：1) 按任务需求修改代码；2) 自检（按仓库约定，如 tsc/lint/build）；3) 把改动提交到本地分支 ${branch}（git checkout -b ${branch}，再 git add/commit，**不要 push**，不要提交无关改动）。\n工作仓库：${repoPath}\n最后输出 JSON（不要有其他文字）：{"status":"DONE 或 BLOCKED","summary":"改动说明","files_changed":["文件列表"],"commit":"提交哈希或略"}`);
   const res = await runCodex({ cwd: repoPath, sandbox: "workspace-write", prompt, label: "exec" });
   const j = extractJson(res.lastMessage);
   const branchOk = await branchExists({ cwd: repoPath, branch });
+  const ctx = loadContext(issue.id);
+  ctx.stages.exec = {
+    status: j?.status || "BLOCKED",
+    summary: j?.summary || "",
+    branch,
+    commit: j?.commit || "",
+    files_changed: Array.isArray(j?.files_changed) ? j.files_changed : [],
+    at: new Date().toISOString(),
+  };
+  saveContext(ctx);
   if (res.ok && j?.status === "DONE" && (branchOk || res.dryRun)) {
     await plane.addComment(issue.id, `执行完成（分支 ${branch}）：${escapeHtml(j.summary || "")}`, token);
     await plane.updateIssue(issue.id, { state: states["待验收"], assignee_ids: [cfg.roles.verify.userId] }, token);
