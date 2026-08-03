@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process";
-
 function runGit(cwd, args) {
   return new Promise((resolve) => {
     const child = spawn("git", args, { stdio: ["ignore", "pipe", "pipe"], cwd });
@@ -30,13 +29,21 @@ export async function worktreeEnsure(repoPath, branch, wtPath) {
   }
   const hasBranch = await branchExists(repoPath, branch);
   if (hasBranch) {
-    const r = await runGit(repoPath, ["worktree", "add", wtPath, branch]);
-    return r.ok;
+    return (await runGit(repoPath, ["worktree", "add", wtPath, branch])).ok;
   }
-  const r = await runGit(repoPath, ["worktree", "add", "-b", branch, wtPath, "HEAD"]);
-  return r.ok;
+  return (await runGit(repoPath, ["worktree", "add", "-b", branch, wtPath, "HEAD"])).ok;
 }
 
 export async function worktreeRemove(repoPath, wtPath) {
   return (await runGit(repoPath, ["worktree", "remove", "--force", wtPath])).ok;
+}
+
+/** runner 侧提交 worktree 内全部改动（runner 不受沙箱限制，可写 .git） */
+export async function commitWorktree(wtPath, message) {
+  const add = await runGit(wtPath, ["add", "-A"]);
+  if (!add.ok) return { ok: false, error: add.err };
+  const commit = await runGit(wtPath, ["commit", "-m", message]);
+  if (!commit.ok) return { ok: false, error: commit.err };
+  const hash = commit.out.split("\n").filter(Boolean).pop() || "";
+  return { ok: true, hash };
 }

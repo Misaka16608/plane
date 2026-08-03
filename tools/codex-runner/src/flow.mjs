@@ -3,7 +3,7 @@ import cfg, { resolveRepo } from "./config.mjs";
 import { log } from "./log.mjs";
 import * as plane from "./plane.mjs";
 import { runCodex, extractJson } from "./agent.mjs";
-import { branchExists, worktreeEnsure, worktreeRemove } from "./git.mjs";
+import { worktreeEnsure, worktreeRemove, commitWorktree } from "./git.mjs";
 import { isInFlight, setInFlight, clearInFlight, recentlyProcessed, markProcessed } from "./state.mjs";
 import { loadContext, saveContext, newContext, parseDescription, stageSummary } from "./ticket-context.mjs";
 
@@ -285,22 +285,32 @@ async function handleExec(issue) {
   const prompt = await buildTicketPrompt(
     issue,
     "exec",
-    `请：1) 在 ${wtPath} 中按任务需求修改代码；2) 自检（按仓库约定，如 tsc/lint/build）；3) 把改动提交到本地分支 ${branch}（确保当前分支为 ${branch}，再 git add/commit，**不要 push**，不要提交无关改动）；4) 给出黑盒验证步骤（验收人如何运行、如何验证）。\n最后输出 JSON（不要有其他文字）：{"status":"DONE 或 BLOCKED","summary":"改动说明","files_changed":["文件列表"],"verification":"黑盒验证步骤","commit":"提交哈希或略"}`
+    `请：1) 在 ${wtPath} 中按任务需求修改代码；2) 自检（按仓库约定，如 tsc/lint/build）；3) **不要执行 git add/commit/push**（runner 会负责把改动提交到本地分支 ${branch}），只修改文件并确保改动完整；4) 给出黑盒验证步骤（验收人如何运行、如何验证）。\n最后输出 JSON（不要有其他文字）：{"status":"DONE 或 BLOCKED","summary":"改动说明","files_changed":["文件列表"],"verification":"黑盒验证步骤"}`
   );
   const { res, ctx: ctx2 } = await runAgent({ issue, sessionKey: "exec", sandbox: "workspace-write", cwd: wtPath, prompt, label: "exec" });
   const j = extractJson(res.lastMessage);
-  const branchOk = await branchExists(repoPath, branch).catch(() => false);
+  let commitHash = "";
+  if (res.ok && j?.status === "DONE" && !res.dryRun) {
+    const c = await commitWorktree(wtPath, `codex(${issue.sequence_id || issue.id.slice(0, 8)}): ${j?.summary || issue.name}`.slice(0, 200));
+    if (!c.ok) {
+      await plane.addComment(issue.id, `执行失败：runner 提交失败（${escapeHtml(c.error || "")}）。状态回退"待执行"。`, token);
+      await plane.updateIssue(issue.id, { state: states["待执行"] }, token);
+      log(`issue ${issue.id} exec commit failed -> 待执行`);
+      return;
+    }
+    commitHash = c.hash;
+  }
   ctx2.stages.exec = {
     status: j?.status || "BLOCKED",
     summary: j?.summary || "",
     branch,
-    commit: j?.commit || "",
+    commit: commitHash,
     files_changed: Array.isArray(j?.files_changed) ? j.files_changed : [],
     verification: j?.verification || "",
     at: new Date().toISOString(),
   };
   saveContext(ctx2);
-  if (res.ok && j?.status === "DONE" && (branchOk || res.dryRun)) {
+  if (res.ok && j?.status === "DONE") {
     const verif = j?.verification ? `\n黑盒验证步骤：${j.verification}` : "";
     await plane.addComment(issue.id, `执行完成（分支 ${branch}）：${escapeHtml(j.summary || "")}${escapeHtml(verif)}`, token);
     await plane.updateIssue(issue.id, { state: states["待验收"], assignee_ids: [cfg.roles.verify.userId] }, token);
@@ -329,7 +339,7 @@ async function handleVerify(issue) {
   const prompt = await buildTicketPrompt(
     issue,
     "verify",
-    `请对分支 ${branch} 的执行结果做**黑盒验收**：1) 在 ${wtPath} 中确认分支与改动（git 状态/diff 或查看文件）；2) 对照【验收标准】逐条验证，能运行则构建/运行验证，不能运行则做静态核对；3) **禁止修改源码**（只可构建/运行/查看）；4) 给出问题清单。\n最后输出 JSON（不要有其他文字）：{"verdict":"PASS 或 REJECT","issues":["问题1","问题2"],"summary":"验收结论"}`
+    `请对分支 ${branch} 的执行结果做**黑盒验收**：1) 在 ${wtPath} 中对照执行结论与【验收标准】检查实际文件/产物（避免依赖 git 命令，直接查看文件内容）；2) 逐条验证，能运行则构建/运行验证，不能运行则做静态核对；3) **禁止修改任何文件**（只可构建/运行/查看）；4) 给出问题清单。\n最后输出 JSON（不要有其他文字）：{"verdict":"PASS 或 REJECT","issues":["问题1","问题2"],"summary":"验收结论"}`
   );
   const { res, ctx: ctx2 } = await runAgent({ issue, sessionKey: "verify", sandbox: "workspace-write", cwd: wtPath, prompt, label: "verify" });
   const j = extractJson(res.lastMessage);
@@ -381,7 +391,10 @@ async function checkParentCompletion(issue) {
   for (const c of children) {
     if (stateName(c.state_id) === "取消") {
       const crepoPath = resolveRepo(parseRepo(c));
-      if (crepoPath && !cfg.dryRun) await worktreeRemove(crepoPath, worktreePath(crepoPath, c.id)).catch(() => {});
+      if (crepoPath && !cfg.dryRun) {
+        const cbranch = `codex/${c.sequence_id || c.id.slice(0, 8)}`;
+        await worktreeRemove(crepoPath, worktreePath(crepoPath, c.id)).catch(() => {});
+      }
     }
   }
   log(`issue ${issue.id} parent settled (${done} done / ${cancelled} cancelled) -> 已完成`);

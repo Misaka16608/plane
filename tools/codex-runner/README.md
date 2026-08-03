@@ -43,7 +43,7 @@ node src/runner.mjs --task <issue-id>  # 处理指定任务后退出
 
 ## 执行与验收隔离（v1.6）
 
-- 每个单子在目标仓库旁建一个 **worktree**（`<仓库父目录>\.codex-wt\<单子id>`），执行 agent 在其中改代码并 commit 到本地分支 `codex/<标识>`（不 push）；验收 agent 在同一 worktree 做黑盒验收（可构建/运行，禁改源码）；单子完成后自动清理 worktree；
+- 每个单子在目标仓库旁建一个 **worktree**（`<仓库父目录>\.codex-wt\<单子id>`），执行 agent 在其中**只改文件**（不执行 git 命令），跑完后由 **runner 侧提交**到本地分支 `codex/<标识>`（不 push）——避免 agent 沙箱无法写 worktree 外 `.git` 的问题；验收 agent 在同一 worktree 做黑盒验收（可构建/运行，禁改源码）；单子完成后自动清理 worktree；
 - 子任务直接进入"待执行"（跳过评估/拆分），最多拆一次不递归。
 
 ## 护栏
