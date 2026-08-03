@@ -86,6 +86,14 @@ export async function getStates(token) {
   return map;
 }
 
+let projectIdentifier = "";
+export async function getProjectIdentifier(token) {
+  if (projectIdentifier) return projectIdentifier;
+  const { ok, data } = await api(`/api/workspaces/${cfg.workspace}/projects/${cfg.project}/`, { token });
+  if (ok && data?.identifier) projectIdentifier = data.identifier;
+  return projectIdentifier;
+}
+
 export async function createWebhook(token, url) {
   const { ok, status, data } = await api(`/api/workspaces/${cfg.workspace}/webhooks/`, {
     method: "POST",

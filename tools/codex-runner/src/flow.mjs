@@ -40,6 +40,12 @@ function parseRepo(issue) {
   return parseDescription(issue.description_html).repo || cfg.defaultRepo || "";
 }
 
+/** 单号：项目标识-序号（如 2026080201-25），用于分支名/提交信息 */
+async function ticketRef(issue) {
+  const pid = await plane.getProjectIdentifier(cfg.roles.exec.token);
+  return issue.sequence_id ? `${pid ? `${pid}-` : ""}${issue.sequence_id}` : issue.id.slice(0, 8);
+}
+
 function worktreePath(repoPath, issueId) {
   return path.join(path.dirname(repoPath), ".codex-wt", issueId);
 }
@@ -270,7 +276,8 @@ async function handleExec(issue) {
     await plane.updateIssue(issue.id, { state: states["待执行"] }, token);
     return;
   }
-  const branch = `codex/${issue.sequence_id || issue.id.slice(0, 8)}`;
+  const ref = await ticketRef(issue);
+  const branch = `codex/${ref}`;
   const wtPath = cfg.dryRun ? repoPath : worktreePath(repoPath, issue.id);
   if (!cfg.dryRun) {
     const ok = await worktreeEnsure(repoPath, branch, wtPath);
@@ -291,7 +298,7 @@ async function handleExec(issue) {
   const j = extractJson(res.lastMessage);
   let commitHash = "";
   if (res.ok && j?.status === "DONE" && !res.dryRun) {
-    const c = await commitWorktree(wtPath, `codex(${issue.sequence_id || issue.id.slice(0, 8)}): ${j?.summary || issue.name}`.slice(0, 200));
+    const c = await commitWorktree(wtPath, `codex(${ref}): ${j?.summary || issue.name}`.slice(0, 200));
     if (!c.ok) {
       await plane.addComment(issue.id, `执行失败：runner 提交失败（${escapeHtml(c.error || "")}）。状态回退"待执行"。`, token);
       await plane.updateIssue(issue.id, { state: states["待执行"] }, token);
@@ -327,7 +334,8 @@ async function handleVerify(issue) {
   const token = cfg.roles.verify.token;
   const repo = parseRepo(issue);
   const repoPath = resolveRepo(repo);
-  const branch = `codex/${issue.sequence_id || issue.id.slice(0, 8)}`;
+  const ref = await ticketRef(issue);
+  const branch = `codex/${ref}`;
   const wtPath = cfg.dryRun ? repoPath || process.cwd() : worktreePath(repoPath || "", issue.id);
   if (!cfg.dryRun && !repoPath) {
     await plane.addComment(issue.id, '验收失败：无法定位目标仓库。状态回退"待执行"。', token);
@@ -392,7 +400,6 @@ async function checkParentCompletion(issue) {
     if (stateName(c.state_id) === "取消") {
       const crepoPath = resolveRepo(parseRepo(c));
       if (crepoPath && !cfg.dryRun) {
-        const cbranch = `codex/${c.sequence_id || c.id.slice(0, 8)}`;
         await worktreeRemove(crepoPath, worktreePath(crepoPath, c.id)).catch(() => {});
       }
     }
