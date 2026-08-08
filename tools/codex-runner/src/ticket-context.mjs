@@ -20,6 +20,8 @@ export function loadContext(id) {
 export function newContext(id, extra = {}) {
   return {
     id,
+    workspace: extra.workspace || null,
+    project: extra.project || null,
     depth: extra.depth || 0,
     parentId: extra.parentId || null,
     parentSplitSession: extra.parentSplitSession || null,

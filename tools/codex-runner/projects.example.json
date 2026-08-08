@@ -1,0 +1,15 @@
+{
+  "defaultRepos": {
+    "WeatherPetUnity": "D:/_Code/Client/WeatherPet/WeatherPetUnity",
+    "BGLOCATION": "D:/_Code/Client/WeatherPet/bglocation",
+    "WeatherPetDialogueEditor": "D:/_Code/Client/WeatherPet/weatherpet-dialogue-editor"
+  },
+  "projects": [
+    {
+      "workspace": "workingcatpet",
+      "project": "4c9803a4-e542-4213-b04b-57628bc5bee9",
+      "defaultRepo": "WeatherPetUnity",
+      "repos": {}
+    }
+  ]
+}

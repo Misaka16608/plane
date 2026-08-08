@@ -8,6 +8,20 @@ Plane → Codex 自动化 runner：监听工作区 webhook + 定时扫描，按"
 2. token 自动从 `apps/api/.env` 读取（`CODEX_EVAL/SPLIT/EXEC/VERIFY_TOKEN` 与 `_USER_ID`）；
 3. 创建 webhook 后把 `secret_key` 填入 `.env` 的 `WEBHOOK_SECRET`。
 
+### 多工作区 / 多项目（v1.7）
+
+- **推荐方式**：复制 `projects.example.json` 为 `projects.json`（不入库），在其中配置：
+  - `defaultRepos`：全局仓库池，所有项目共用；
+  - `projects`：目标工作区/项目列表，每项可配 `defaultRepo` 与项目专属 `repos`；
+  - 仓库解析顺序：任务描述"仓库：X" → 项目级 `repos` → 全局 `defaultRepos` → 该项目 `defaultRepo`。
+- **兼容方式**：没有 `projects.json` 时，回退旧单项目模式
+  （`PLANE_WORKSPACE` + `PLANE_PROJECT` + 全局 `REPO_*`）。
+- **归属路由**：issue 事件按 webhook payload 的 `workspace_slug` / `project_id` 定位项目；
+  定位不到时遍历全部已配置项目兜底，最终以 issue 自带 `project_id` 为准。
+- 状态名需在各项目保持一致（待评估…已完成/取消）；runner 为每个项目单独拉取状态映射。
+- 每个工作区需各自创建 webhook 指向同一个 runner 地址；分支单号使用各项目标识
+  （`codex/<项目标识>-<序号>`），跨项目不冲突。
+
 ## 运行
 
 ```powershell

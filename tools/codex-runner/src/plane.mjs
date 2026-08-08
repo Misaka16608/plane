@@ -1,6 +1,8 @@
 import cfg from "./config.mjs";
 
-const BASE = `/api/workspaces/${cfg.workspace}/projects/${cfg.project}`;
+function base(p) {
+  return `/api/workspaces/${p.workspace}/projects/${p.project}`;
+}
 
 async function api(path, { method = "GET", token, body } = {}) {
   const headers = { "X-Api-Key": token, "Content-Type": "application/json" };
@@ -24,17 +26,17 @@ async function api(path, { method = "GET", token, body } = {}) {
   return { ok: res.ok, status: res.status, data };
 }
 
-export async function getIssue(id) {
-  const { ok, data } = await api(`${BASE}/issues/${id}/`, { token: cfg.roles.exec.token });
+export async function getIssue(id, p) {
+  const { ok, data } = await api(`${base(p)}/issues/${id}/`, { token: cfg.roles.exec.token });
   return ok ? data : null;
 }
 
-export async function listIssues() {
+export async function listIssues(p) {
   const out = [];
   let cursor = null;
   for (let i = 0; i < 100; i++) {
     const suffix = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
-    const { ok, data } = await api(`${BASE}/issues/${suffix}`, { token: cfg.roles.exec.token });
+    const { ok, data } = await api(`${base(p)}/issues/${suffix}`, { token: cfg.roles.exec.token });
     if (!ok) throw new Error("listIssues failed");
     const results = Array.isArray(data) ? data : data?.results || [];
     out.push(...results);
@@ -44,8 +46,8 @@ export async function listIssues() {
   return out;
 }
 
-export async function updateIssue(id, patch, token) {
-  const { ok, status, data } = await api(`${BASE}/issues/${id}/`, {
+export async function updateIssue(id, patch, token, p) {
+  const { ok, status, data } = await api(`${base(p)}/issues/${id}/`, {
     method: "PATCH",
     token,
     body: patch,
@@ -54,8 +56,8 @@ export async function updateIssue(id, patch, token) {
   return data;
 }
 
-export async function addComment(issueId, html, token) {
-  const { ok, status, data } = await api(`${BASE}/issues/${issueId}/comments/`, {
+export async function addComment(issueId, html, token, p) {
+  const { ok, status, data } = await api(`${base(p)}/issues/${issueId}/comments/`, {
     method: "POST",
     token,
     body: { comment_html: html },
@@ -64,13 +66,13 @@ export async function addComment(issueId, html, token) {
   return data;
 }
 
-export async function getComments(issueId, token) {
-  const { ok, data } = await api(`${BASE}/issues/${issueId}/comments/`, { token });
+export async function getComments(issueId, token, p) {
+  const { ok, data } = await api(`${base(p)}/issues/${issueId}/comments/`, { token });
   return ok ? data || [] : [];
 }
 
-export async function createIssue(data, token) {
-  const { ok, status, data: body } = await api(`${BASE}/issues/`, {
+export async function createIssue(data, token, p) {
+  const { ok, status, data: body } = await api(`${base(p)}/issues/`, {
     method: "POST",
     token,
     body: data,
@@ -79,23 +81,25 @@ export async function createIssue(data, token) {
   return body;
 }
 
-export async function getStates(token) {
-  const { ok, data } = await api(`${BASE}/states/`, { token });
+export async function getStates(token, p) {
+  const { ok, data } = await api(`${base(p)}/states/`, { token });
   const map = {};
   for (const s of data || []) map[s.name] = s.id;
   return map;
 }
 
-let projectIdentifier = "";
-export async function getProjectIdentifier(token) {
-  if (projectIdentifier) return projectIdentifier;
-  const { ok, data } = await api(`/api/workspaces/${cfg.workspace}/projects/${cfg.project}/`, { token });
-  if (ok && data?.identifier) projectIdentifier = data.identifier;
-  return projectIdentifier;
+const projectIdentifierCache = new Map();
+export async function getProjectIdentifier(token, p) {
+  const key = `${p.workspace}/${p.project}`;
+  if (projectIdentifierCache.has(key)) return projectIdentifierCache.get(key);
+  const { ok, data } = await api(`${base(p)}/`, { token });
+  const identifier = ok && data?.identifier ? data.identifier : "";
+  projectIdentifierCache.set(key, identifier);
+  return identifier;
 }
 
-export async function createWebhook(token, url) {
-  const { ok, status, data } = await api(`/api/workspaces/${cfg.workspace}/webhooks/`, {
+export async function createWebhook(token, p, url) {
+  const { ok, status, data } = await api(`/api/workspaces/${p.workspace}/webhooks/`, {
     method: "POST",
     token,
     body: { url, issue: true, issue_comment: true, is_active: true },

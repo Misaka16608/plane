@@ -9,18 +9,18 @@ const queue = [];
 let processing = false;
 let scanTimer = null;
 
-function enqueue(issueId) {
-  if (!queue.includes(issueId)) queue.push(issueId);
+function enqueue(issueId, hint = null) {
+  if (!queue.some((q) => q.id === issueId)) queue.push({ id: issueId, hint: hint || null });
   pump();
 }
 
 async function pump() {
   if (processing) return;
   while (queue.length) {
-    const id = queue.shift();
+    const { id, hint } = queue.shift();
     processing = true;
     try {
-      await processIssue(id);
+      await processIssue(id, hint);
     } catch (err) {
       log(`process ${id} error: ${err.message}`);
     } finally {
@@ -36,18 +36,21 @@ async function scan() {
     log(`states refresh failed: ${err.message}`);
     return;
   }
-  let issues = [];
-  try {
-    issues = await plane.listIssues();
-  } catch (err) {
-    log(`listIssues failed: ${err.message}`);
-    return;
+  let total = 0;
+  for (const p of cfg.projects) {
+    let issues = [];
+    try {
+      issues = await plane.listIssues(p);
+    } catch (err) {
+      log(`listIssues failed for ${p.workspace}/${p.project}: ${err.message}`);
+      continue;
+    }
+    total += issues.length;
+    for (const issue of issues) {
+      enqueue(issue.id, { workspace: p.workspace, project: p.project });
+    }
   }
-  for (const issue of issues) {
-    if (!issue.parent_id) enqueue(issue.id);
-    else enqueue(issue.id);
-  }
-  log(`scan done: ${issues.length} issues enqueued`);
+  log(`scan done: ${total} issues enqueued across ${cfg.projects.length} project(s)`);
 }
 
 function scheduleScan(delayMs = 10000) {
@@ -67,6 +70,27 @@ function verifySignature(raw, sig) {
 function isBotActor(id) {
   if (!id) return false;
   return Object.values(cfg.roles).some((r) => r.userId && r.userId === id);
+}
+
+/**
+ * 从 webhook payload 提取归属线索。
+ * payload 顶层固定带 workspace_id / workspace_slug；
+ * issue 事件 data 为完整 issue（含 project_id / workspace_id）；
+ * issue_comment 事件 data 为评论（顶层 workspace 可用，project 缺省则交给 processIssue 遍历兜底）。
+ */
+function hintFromPayload(payload) {
+  const data = payload?.data || {};
+  const hint = {};
+  const ws = payload.workspace_slug || payload.workspace_id || data.workspace_slug || data.workspace_id || "";
+  if (ws) hint.workspace = ws;
+  const pid =
+    data.project_id ||
+    data.project_detail?.id ||
+    data.issue?.project_id ||
+    data.project ||
+    "";
+  if (pid) hint.project = pid;
+  return hint;
 }
 
 const server = http.createServer((req, res) => {
@@ -107,6 +131,7 @@ const server = http.createServer((req, res) => {
         log(`webhook: event=${payload.event} action=${payload.action}`);
         const data = payload.data || {};
         let issueId = null;
+        const hint = hintFromPayload(payload);
         if (payload.event === "issue") {
           issueId = data?.id;
         } else if (payload.event === "issue_comment") {
@@ -118,7 +143,7 @@ const server = http.createServer((req, res) => {
           issueId = data?.issue;
         }
         if (issueId) {
-          enqueue(issueId);
+          enqueue(issueId, hint);
           scheduleScan();
         }
         return;
