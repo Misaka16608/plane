@@ -183,7 +183,7 @@ if (args.includes("--once")) {
   } else {
     server.listen(cfg.port, () => {
       log(`runner listening on :${cfg.port} (dryRun=${cfg.dryRun})`);
-      log(`workspace=${cfg.workspace} project=${cfg.project}`);
+      log(`projects configured: ${cfg.projects.length} (${cfg.projects.map((p) => `${p.workspace}/${p.project}`).join(", ") || "none"})`);
     });
     refreshStates().then(scan).catch((err) => log(`initial scan failed: ${err.message}`));
     setInterval(scan, 5 * 60 * 1000);
