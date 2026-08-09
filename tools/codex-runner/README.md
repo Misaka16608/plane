@@ -20,7 +20,10 @@ Plane → Codex 自动化 runner：监听工作区 webhook + 定时扫描，按"
   定位不到时遍历全部已配置项目兜底，最终以 issue 自带 `project_id` 为准。
 - 状态名需在各项目保持一致（待评估…已完成/取消）；runner 为每个项目单独拉取状态映射。
 - 每个工作区需各自创建 webhook 指向同一个 runner 地址；分支单号使用各项目标识
-  （`codex/<项目标识>-<序号>`），跨项目不冲突。
+  （`codex/<项目标识>-<序号>`），跨项目不冲突；
+- 每个工作区 webhook 的 secret 不同：把对应 secret 填到 `projects.json` 该项目的
+  `webhookSecret` 字段（或统一放 `.env` 的 `WEBHOOK_SECRET`），runner 验签时
+  会依次尝试所有已知 secret。
 
 ## 运行
 

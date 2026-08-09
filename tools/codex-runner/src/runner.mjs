@@ -62,9 +62,15 @@ function scheduleScan(delayMs = 10000) {
 }
 
 function verifySignature(raw, sig) {
-  if (!cfg.webhookSecret) return true;
-  const expected = crypto.createHmac("sha256", cfg.webhookSecret).update(raw).digest("hex");
-  return sig === expected;
+  const secrets = [
+    cfg.webhookSecret,
+    ...cfg.projects.map((p) => p.webhookSecret).filter(Boolean),
+  ].filter(Boolean);
+  if (!secrets.length) return true;
+  return secrets.some((s) => {
+    const expected = crypto.createHmac("sha256", s).update(raw).digest("hex");
+    return sig === expected;
+  });
 }
 
 function isBotActor(id) {

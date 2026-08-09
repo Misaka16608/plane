@@ -77,12 +77,13 @@ function buildProjects() {
         project: p.project,
         defaultRepo: p.defaultRepo || "",
         repos: p.repos || {},
+        webhookSecret: p.webhookSecret || "",
       }));
   }
   const workspace = env.PLANE_WORKSPACE || "workingcatpet";
   const project = env.PLANE_PROJECT || "";
   if (!project) return [];
-  return [{ workspace, project, defaultRepo: env.CODEX_DEFAULT_REPO || "", repos: {} }];
+  return [{ workspace, project, defaultRepo: env.CODEX_DEFAULT_REPO || "", repos: {}, webhookSecret: "" }];
 }
 
 const cfg = {
