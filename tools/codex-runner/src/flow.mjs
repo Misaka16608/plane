@@ -3,7 +3,7 @@ import cfg, { resolveRepo, projectKey, findProject, projectDefaultRepo } from ".
 import { log } from "./log.mjs";
 import * as plane from "./plane.mjs";
 import { runCodex, extractJson } from "./agent.mjs";
-import { worktreeEnsure, worktreeRemove, commitWorktree } from "./git.mjs";
+import { worktreeEnsure, worktreeRemove, commitWorktree, hasChanges } from "./git.mjs";
 import { isInFlight, setInFlight, clearInFlight, recentlyProcessed, markProcessed } from "./state.mjs";
 import { loadContext, saveContext, newContext, parseDescription, stageSummary } from "./ticket-context.mjs";
 
@@ -143,8 +143,28 @@ export function stageFor(issue, p) {
 async function runAgent({ issue, sessionKey, threadIdOverride = "", sandbox, cwd, prompt, label }) {
   const ctx = loadContext(issue.id);
   const threadId = threadIdOverride || ctx.sessions?.[sessionKey] || "";
-  const res = await runCodex({ mode: threadId ? "resume" : "create", threadId, cwd, sandbox, prompt, label });
-  if (!res.dryRun && res.threadId && !threadId) {
+  let res;
+  let created = false;
+  if (threadId) {
+    res = await runCodex({
+      mode: "resume",
+      threadId,
+      cwd,
+      sandbox,
+      prompt,
+      label,
+      timeoutMs: cfg.resumeTimeoutMs,
+    });
+    if (!res.ok) {
+      log(`[${label}] resume failed, fallback to new session: ${res.error || "unknown"}`);
+      res = await runCodex({ mode: "create", cwd, sandbox, prompt, label, timeoutMs: cfg.stepTimeoutMs });
+      created = true;
+    }
+  } else {
+    res = await runCodex({ mode: "create", cwd, sandbox, prompt, label, timeoutMs: cfg.stepTimeoutMs });
+    created = true;
+  }
+  if (!res.dryRun && created && res.threadId) {
     const fresh = loadContext(issue.id);
     fresh.sessions = fresh.sessions || {};
     fresh.sessions[sessionKey] = res.threadId;
@@ -325,14 +345,18 @@ async function handleExec(issue, p) {
   const j = extractJson(res.lastMessage);
   let commitHash = "";
   if (res.ok && j?.status === "DONE" && !res.dryRun) {
-    const c = await commitWorktree(wtPath, `codex(${ref}): ${j?.summary || issue.name}`.slice(0, 200));
-    if (!c.ok) {
-      await plane.addComment(issue.id, `执行失败：runner 提交失败（${escapeHtml(c.error || "")}）。状态回退"待执行"。`, token, p);
-      await plane.updateIssue(issue.id, { state: statesFor(p)["待执行"] }, token, p);
-      log(`issue ${issue.id} exec commit failed -> 待执行`);
-      return;
+    if (await hasChanges(wtPath)) {
+      const c = await commitWorktree(wtPath, `codex(${ref}): ${j?.summary || issue.name}`.slice(0, 200));
+      if (!c.ok) {
+        await plane.addComment(issue.id, `执行失败：runner 提交失败（${escapeHtml(c.error || "")}）。状态回退"待执行"。`, token, p);
+        await plane.updateIssue(issue.id, { state: statesFor(p)["待执行"] }, token, p);
+        log(`issue ${issue.id} exec commit failed -> 待执行`);
+        return;
+      }
+      commitHash = c.hash;
+    } else {
+      log(`issue ${issue.id} exec DONE with no file changes, skip commit`);
     }
-    commitHash = c.hash;
   }
   ctx2.stages.exec = {
     status: j?.status || "BLOCKED",

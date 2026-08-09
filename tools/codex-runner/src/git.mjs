@@ -23,7 +23,10 @@ export async function branchExists(repoPath, branch) {
 /** 确保单子 worktree 存在且位于目标分支（分支不存在时从 HEAD 创建） */
 export async function worktreeEnsure(repoPath, branch, wtPath) {
   const list = await runGit(repoPath, ["worktree", "list", "--porcelain"]);
-  if (list.out.includes(wtPath)) {
+  // Windows 下 git 输出用正斜杠，wtPath 可能是反斜杠，统一后比较
+  const normalizedList = list.out.replace(/\\/g, "/");
+  const normalizedWt = wtPath.replace(/\\/g, "/");
+  if (normalizedList.includes(normalizedWt)) {
     await runGit(wtPath, ["checkout", branch]);
     return true;
   }
@@ -36,6 +39,12 @@ export async function worktreeEnsure(repoPath, branch, wtPath) {
 
 export async function worktreeRemove(repoPath, wtPath) {
   return (await runGit(repoPath, ["worktree", "remove", "--force", wtPath])).ok;
+}
+
+/** worktree 内是否有未提交改动 */
+export async function hasChanges(wtPath) {
+  const r = await runGit(wtPath, ["status", "--porcelain"]);
+  return r.ok && r.out.trim().length > 0;
 }
 
 /** runner 侧提交 worktree 内全部改动（runner 不受沙箱限制，可写 .git） */

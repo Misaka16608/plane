@@ -10,6 +10,10 @@ let codexBin = null;
 
 function resolveCodexBin() {
   if (codexBin) return codexBin;
+  if (cfg.codexBin && fs.existsSync(cfg.codexBin)) {
+    codexBin = cfg.codexBin;
+    return codexBin;
+  }
   const pathDirs = (process.env.PATH || "").split(";");
   for (const dir of pathDirs) {
     if (!dir) continue;
@@ -98,16 +102,24 @@ export async function runCodex({
   return await new Promise((resolve) => {
     log(`[${label}] codex ${mode} start (cwd=${cwd}, sandbox=${sandbox}${threadId ? `, resume=${threadId}` : ""})`);
     let child;
+    let settled = false;
+    const resolveOnce = (v) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(v);
+    };
     const timer = setTimeout(() => {
-      log(`[${label}] timeout after ${timeoutMs}ms, killing`);
+      log(`[${label}] timeout after ${timeoutMs}ms, killing${mode === "resume" ? " (will fallback to new session)" : ""}`);
       if (child) child.kill();
+      // Windows 上 kill 后 close 可能不触发，强制 resolve，让上层走降级/失败处理
+      resolveOnce({ ok: false, error: `timeout after ${timeoutMs}ms`, threadId: "", lastMessage: "" });
     }, timeoutMs);
     try {
       child = spawn(cmd, spawnArgs, { stdio: ["pipe", "pipe", "pipe"], cwd });
     } catch (err) {
-      clearTimeout(timer);
       log(`[${label}] spawn error: ${err.message}`);
-      resolve({ ok: false, error: err.message, threadId: "", lastMessage: "" });
+      resolveOnce({ ok: false, error: err.message, threadId: "", lastMessage: "" });
       return;
     }
     let stdout = "";
@@ -119,17 +131,15 @@ export async function runCodex({
       stderr += d.toString();
     });
     child.on("error", (err) => {
-      clearTimeout(timer);
       log(`[${label}] spawn error: ${err.message}`);
-      resolve({ ok: false, error: err.message, threadId: "", lastMessage: "" });
+      resolveOnce({ ok: false, error: err.message, threadId: "", lastMessage: "" });
     });
     child.on("close", (code) => {
-      clearTimeout(timer);
       const { threadId: gotThread, lastMessage, hasError } = parseEvents(stdout);
       const ok = code === 0 && !hasError;
       log(`[${label}] codex exit=${code} thread=${gotThread || "-"} ok=${ok}`);
       if (stderr) log(`[${label}] stderr: ${stderr.slice(0, 500)}`);
-      resolve({ ok, exitCode: code, threadId: gotThread, lastMessage, error: ok ? null : stderr.slice(0, 1000) });
+      resolveOnce({ ok, exitCode: code, threadId: gotThread, lastMessage, error: ok ? null : stderr.slice(0, 1000) });
     });
     child.stdin.end(prompt);
   });

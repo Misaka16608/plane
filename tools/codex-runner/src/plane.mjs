@@ -12,6 +12,7 @@ async function api(path, { method = "GET", token, body } = {}) {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(15000),
     });
   } catch (err) {
     throw new Error(`network error ${method} ${path}: ${err.message}`);
